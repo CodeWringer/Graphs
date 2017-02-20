@@ -10,8 +10,10 @@ namespace Graph.Pathing
 {
     /// <summary>
     /// Pathfinding algorithm 'AStar'. 
+    /// Uses a heuristic to find the optimal path. 
+    /// Useful for finding a single target destination for a given source destination or vice versa. 
     /// </summary>
-    public class AStar
+    public abstract class AStar
     {
         /*****************************************************************/
         // Declarations
@@ -20,17 +22,11 @@ namespace Graph.Pathing
 
         #endregion Declarations
         /*****************************************************************/
-        // Constructors
-        /*****************************************************************/
-        #region Constructors
-
-        #endregion Constructors
-        /*****************************************************************/
         // Methods
         /*****************************************************************/
         #region Methods
 
-        #region GenericGrid
+        #region SimpleGrid
 
         /// <summary>
         /// Finds a path on the given grid and returns the path, beginning with the given start node. 
@@ -45,7 +41,7 @@ namespace Graph.Pathing
             throw new NotImplementedException();
         }
 
-        #endregion GenericGrid
+        #endregion SimpleGrid
 
         #region SquareGrid
 
@@ -66,11 +62,5 @@ namespace Graph.Pathing
         #endregion PolygonGrid
 
         #endregion Methods
-        /*****************************************************************/
-        // Events
-        /*****************************************************************/
-        #region Events
-
-        #endregion Events
     }
 }

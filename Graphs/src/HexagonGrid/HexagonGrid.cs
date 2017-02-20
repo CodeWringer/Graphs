@@ -16,8 +16,8 @@ namespace Graph.Grid
     /// <remarks>
     /// TODO:
     /// - Define data structure for "grid" of hexagons. 
-    ///     - Rectangle
-    ///     - Hexagon
+    ///     - Rectangle shape
+    ///     - Hexagon shape
     /// - Populate a grid with hexagons. 
     /// - Iterate entire grid. 
     /// - Getting hexagon neighbor(s). 

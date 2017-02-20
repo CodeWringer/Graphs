@@ -10,6 +10,7 @@ namespace Graph.Pathing
 {
     /// <summary>
     /// Pathfinding algorithm 'BreadthFirstSearch'. 
+    /// Useful for finding all source destinations for a given target destination or vice versa. 
     /// </summary>
     public abstract class BreadthFirstSearch
     {
@@ -24,7 +25,7 @@ namespace Graph.Pathing
         /*****************************************************************/
         #region Methods
 
-        #region GenericGrid
+        #region SimpleGrid
 
         /// <summary>
         /// Finds a path on the given grid and returns the path, beginning with the given start node. 
@@ -220,7 +221,7 @@ namespace Graph.Pathing
             return false;
         }
 
-        #endregion GenericGrid
+        #endregion SimpleGrid
 
         #region SquareGrid
 
@@ -371,11 +372,5 @@ namespace Graph.Pathing
         #endregion PolygonGrid
 
         #endregion Methods
-        /*****************************************************************/
-        // Events
-        /*****************************************************************/
-        #region Events
-
-        #endregion Events
     }
 }
