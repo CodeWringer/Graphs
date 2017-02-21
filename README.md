@@ -7,7 +7,7 @@ This library is intended to provide path finding algorithms and graphs to use th
 
 ---------------------------------------
 ## Planned features
-This library is still heavily work in progress and as such is entirely subject to change. 
+This library is still heavily work in progress and as such is entirely subject to change. Among the planned features are: 
 * Hexagonal grids
 * Polygonal (arbitrary) graphs
 * Additional A* variants
@@ -62,7 +62,7 @@ Using A*
 
 
 ### Using the SquareGrid class
-
+```C#
     int width = 20;
     int height = 20;
     Size sizeTile = new Size(10, 10);
@@ -71,18 +71,18 @@ Using A*
     // Define some impassable tiles. 
     for (int i = 0; i < height - 8; i++)
     {
-    grid.GetAt(10, i).impassable = true;
+        grid.GetAt(10, i).impassable = true;
     }
     // Define some difficult terrain. 
     for (int i = 0; i < height / 2; i++)
     {
-    grid.GetAt(10, i).cost = 5;
+        grid.GetAt(10, i).cost = 5;
     }
 
     // Define start and goal positions. 
     Point pntStart = new Point(1, 1);
     Point pntGoal = new Point(18, 5);
-
+```
 
 Using Breadth-First-Search
 
