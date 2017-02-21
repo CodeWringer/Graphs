@@ -20,81 +20,87 @@ In order to use this library, you can choose one of two approaches. Either creat
 * The disadvantage of the classes is an increase in memory requirement. 
 
 ### Creating your own grid
-<code>
-// Create your grid. 
-int width = 20;
-int height = 20;
-int tileImpassable = 1; // Acts as a non-walkable tile. 
-int[,] grid = new int[width, height]; // The grid of walkable tiles. 
+'''C#
+    // Create your grid. 
+    int width = 20;
+    int height = 20;
+    int tileImpassable = 1; // Acts as a non-walkable tile. 
+    int[,] grid = new int[width, height]; // The grid of walkable tiles. 
 
-// Define some impassable tiles. 
-for (int i = 0; i < height - 8; i++)
-{
-    grid[10, i] = tileImpassable;
-}
-// Define some difficult terrain. 
-for (int i = 0; i < height / 2; i++)
-{
-    gridCost[15, i + height / 2] = 5;
-}
+    // Define some impassable tiles. 
+    for (int i = 0; i < height - 8; i++)
+    {
+        grid[10, i] = tileImpassable;
+    }
+    // Define some difficult terrain. 
+    for (int i = 0; i < height / 2; i++)
+    {
+        gridCost[15, i + height / 2] = 5;
+    }
 
-// Define start and goal positions. 
-Point pntStart = new Point(1, 1);
-Point pntGoal = new Point(18, 5);
-</code>
+    // Define start and goal positions. 
+    Point pntStart = new Point(1, 1);
+    Point pntGoal = new Point(18, 5);
+'''
+
 Using Breadth-First-Search
-<code>
-IEnumerable<Point> path = BreadthFirstSearch.GetPath(pntStart, pntGoal, grid, tileImpassable);
-</code>
+'''C#
+    IEnumerable<Point> path = BreadthFirstSearch.GetPath(pntStart, pntGoal, grid, tileImpassable);
+'''
+
 Using Dijkstra's algorithm
-<code>
-IEnumerable<Point> path = Dijkstra.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable);
-</code>
+'''C#
+    IEnumerable<Point> path = Dijkstra.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable);
+'''
+
 Using A*
-<code>
-// With diagonal traversal. 
-IEnumerable<Point> path = AStar.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable);
-// Without diagonal traversal. 
-IEnumerable<Point> path = AStar.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable, -1.0F);
-</code>
+'''C#
+    // With diagonal traversal. 
+    IEnumerable<Point> path = AStar.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable);
+    // Without diagonal traversal. 
+    IEnumerable<Point> path = AStar.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable, -1.0F);
+'''
 
 ### Using the SquareGrid class
-<code>
-int width = 20;
-int height = 20;
-Size sizeTile = new Size(10, 10);
-SquareGrid grid = new SquareGrid(width, height, sizeTile);
+'''C#
+    int width = 20;
+    int height = 20;
+    Size sizeTile = new Size(10, 10);
+    SquareGrid grid = new SquareGrid(width, height, sizeTile);
 
-// Define some impassable tiles. 
-for (int i = 0; i < height - 8; i++)
-{
-grid.GetAt(10, i).impassable = true;
-}
-// Define some difficult terrain. 
-for (int i = 0; i < height / 2; i++)
-{
-grid.GetAt(10, i).cost = 5;
-}
+    // Define some impassable tiles. 
+    for (int i = 0; i < height - 8; i++)
+    {
+    grid.GetAt(10, i).impassable = true;
+    }
+    // Define some difficult terrain. 
+    for (int i = 0; i < height / 2; i++)
+    {
+    grid.GetAt(10, i).cost = 5;
+    }
 
-// Define start and goal positions. 
-Point pntStart = new Point(1, 1);
-Point pntGoal = new Point(18, 5);
-</code>
+    // Define start and goal positions. 
+    Point pntStart = new Point(1, 1);
+    Point pntGoal = new Point(18, 5);
+'''
+
 Using Breadth-First-Search
-<code>
-IEnumerable<SquareCell> path = BreadthFirstSearch.GetPath(pntStart, pntGoal, grid);
-</code>
+'''C#
+    IEnumerable<SquareCell> path = BreadthFirstSearch.GetPath(pntStart, pntGoal, grid);
+'''
+
 Using Dijkstra's algorithm
-<code>
-IEnumerable<SquareCell> path = Dijkstra.GetPath(pntStart, pntGoal, grid);
-</code>
+'''C#
+    IEnumerable<SquareCell> path = Dijkstra.GetPath(pntStart, pntGoal, grid);
+'''
+
 Using A*
-<code>
-// With diagonal traversal. 
-IEnumerable<SquareCell> path = AStar.GetPath(pntStart, pntGoal, grid);
-// Without diagonal traversal. 
-IEnumerable<SquareCell> path = AStar.GetPath(pntStart, pntGoal, grid, -1.0F);
-</code>
+'''C#
+    // With diagonal traversal. 
+    IEnumerable<SquareCell> path = AStar.GetPath(pntStart, pntGoal, grid);
+    // Without diagonal traversal. 
+    IEnumerable<SquareCell> path = AStar.GetPath(pntStart, pntGoal, grid, -1.0F);
+'''
 
 ---------------------------------------
 ## Credit
