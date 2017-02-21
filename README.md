@@ -20,7 +20,7 @@ In order to use this library, you can choose one of two approaches. Either creat
 * The disadvantage of the classes is an increase in memory requirement. 
 
 ### Creating your own grid
-
+```C#
     // Create your grid. 
     int width = 20;
     int height = 20;
@@ -41,25 +41,25 @@ In order to use this library, you can choose one of two approaches. Either creat
     // Define start and goal positions. 
     Point pntStart = new Point(1, 1);
     Point pntGoal = new Point(18, 5);
-
+```
 
 Using Breadth-First-Search
-
+```C#
     IEnumerable<Point> path = BreadthFirstSearch.GetPath(pntStart, pntGoal, grid, tileImpassable);
-
+```
 
 Using Dijkstra's algorithm
-
+```C#
     IEnumerable<Point> path = Dijkstra.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable);
-
+```
 
 Using A*
-
+```C#
     // With diagonal traversal. 
     IEnumerable<Point> path = AStar.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable);
     // Without diagonal traversal. 
     IEnumerable<Point> path = AStar.GetPath(pntStart, pntGoal, grid, gridCost, tileImpassable, -1.0F);
-
+```
 
 ### Using the SquareGrid class
 ```C#
@@ -85,22 +85,22 @@ Using A*
 ```
 
 Using Breadth-First-Search
-
+```C#
     IEnumerable<SquareCell> path = BreadthFirstSearch.GetPath(pntStart, pntGoal, grid);
-
+```
 
 Using Dijkstra's algorithm
-
+```C#
     IEnumerable<SquareCell> path = Dijkstra.GetPath(pntStart, pntGoal, grid);
-
+```
 
 Using A*
-
+```C#
     // With diagonal traversal. 
     IEnumerable<SquareCell> path = AStar.GetPath(pntStart, pntGoal, grid);
     // Without diagonal traversal. 
     IEnumerable<SquareCell> path = AStar.GetPath(pntStart, pntGoal, grid, -1.0F);
-
+```
 
 ---------------------------------------
 ## Credit
