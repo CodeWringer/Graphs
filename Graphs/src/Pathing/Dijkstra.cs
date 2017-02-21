@@ -47,7 +47,7 @@ namespace Graph.Pathing
             SimplePriorityQueue<Point> frontier = new SimplePriorityQueue<Point>();
             List<Point> lPath = new List<Point>();
             Point?[,] cameFrom = new Point?[grid.GetLength(0), grid.GetLength(1)];
-            int?[,] costSoFar = new int?[grid.GetLength(0), grid.GetLength(1)];
+            float?[,] costSoFar = new float?[grid.GetLength(0), grid.GetLength(1)];
             costSoFar[pntStart.X, pntStart.Y] = 0;
 
             frontier.Enqueue(pntStart, 0);
@@ -62,7 +62,7 @@ namespace Graph.Pathing
                 if (current == pntEnd) // Reached goal destination. 
                     break;
 
-                IEnumerable<Point> neighbors = Dijkstra.GetNeighbors(current, grid);
+                IEnumerable<Point> neighbors = Utility.GetNeighbors(current, grid, true);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
@@ -71,12 +71,12 @@ namespace Graph.Pathing
                     if (grid[pntNext.X, pntNext.Y] == tileImpassable) // Looking at impassable tile. 
                         continue;
 
-                    int newCost = costSoFar[current.X, current.Y].Value + Dijkstra.GetCost(gridCost, current, pntNext);
+                    float newCost = costSoFar[current.X, current.Y].Value + Utility.GetCost(gridCost, current, pntNext);
 
                     if (costSoFar[pntNext.X, pntNext.Y] == null || newCost < costSoFar[pntNext.X, pntNext.Y].Value)
                     {
                         costSoFar[pntNext.X, pntNext.Y] = newCost;
-                        int priority = newCost;
+                        float priority = newCost;
                         frontier.Enqueue(pntNext, priority);
                         cameFrom[pntNext.X, pntNext.Y] = current;
                     }
@@ -116,7 +116,7 @@ namespace Graph.Pathing
             SimplePriorityQueue<Point> frontier = new SimplePriorityQueue<Point>();
             List<Point> lPath = new List<Point>();
             Point?[,] cameFrom = new Point?[grid.GetLength(0), grid.GetLength(1)];
-            int?[,] costSoFar = new int?[grid.GetLength(0), grid.GetLength(1)];
+            float?[,] costSoFar = new float?[grid.GetLength(0), grid.GetLength(1)];
             costSoFar[pntStart.X, pntStart.Y] = 0;
 
             frontier.Enqueue(pntStart, 0);
@@ -128,7 +128,7 @@ namespace Graph.Pathing
             {
                 current = frontier.Dequeue();
 
-                IEnumerable<Point> neighbors = Dijkstra.GetNeighbors(current, grid);
+                IEnumerable<Point> neighbors = Utility.GetNeighbors(current, grid, true);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
@@ -140,12 +140,12 @@ namespace Graph.Pathing
                     if (grid[pntNext.X, pntNext.Y] == tileImpassable) // Looking at impassable tile. 
                         continue;
 
-                    int newCost = costSoFar[current.X, current.Y].Value + Dijkstra.GetCost(gridCost, current, pntNext);
+                    float newCost = costSoFar[current.X, current.Y].Value + Utility.GetCost(gridCost, current, pntNext);
 
                     if (costSoFar[pntNext.X, pntNext.Y] == null || newCost < costSoFar[pntNext.X, pntNext.Y].Value)
                     {
                         costSoFar[pntNext.X, pntNext.Y] = newCost;
-                        int priority = newCost;
+                        float priority = newCost;
                         frontier.Enqueue(pntNext, priority);
                         cameFrom[pntNext.X, pntNext.Y] = current;
                     }
@@ -166,73 +166,7 @@ namespace Graph.Pathing
         {
             return BreadthFirstSearch.GetPath(paths, pntEnd);
         }
-
-        /// <summary>
-        /// Returns the coordinates of all neighboring tiles. 
-        /// </summary>
-        /// <param name="pnt"></param>
-        /// <param name="grid"></param>
-        /// <returns></returns>
-        private static IEnumerable<Point> GetNeighbors(Point pnt, int[,] grid)
-        {
-            List<Point> neighbors = new List<Point>();
-
-            Point[] Directions = new Point[] {
-                SquareGrid.East,
-                SquareGrid.South,
-                SquareGrid.West,
-                SquareGrid.North,
-                SquareGrid.SEast,
-                SquareGrid.SWest,
-                SquareGrid.NWest,
-                SquareGrid.NEast
-            };
-
-            int xAt = -1;
-            int yAt = -1;
-
-            for (int i = 0; i < Directions.Length; i++)
-            {
-                xAt = pnt.X + Directions[i].X;
-                yAt = pnt.Y + Directions[i].Y;
-
-                if (!Dijkstra.IsOutOfBounds(xAt, yAt, grid))
-                {
-                    neighbors.Add(new Point(xAt, yAt));
-                }
-            }
-
-            return neighbors;
-        }
-
-        /// <summary>
-        /// Returns true, if the given coordinates are out of bounds. 
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        private static bool IsOutOfBounds(int x, int y, int[,] grid)
-        {
-            if (x < 0 || y < 0 || x >= grid.GetLength(0) || y >= grid.GetLength(1))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Returns the cost difference between the given points on the given grid. 
-        /// </summary>
-        /// <param name="gridCost"></param>
-        /// <param name="current"></param>
-        /// <param name="next"></param>
-        /// <returns></returns>
-        public static int GetCost(int[,] gridCost, Point current, Point next)
-        {
-            return Math.Max(gridCost[next.X, next.Y] - gridCost[current.X, current.Y], 0);
-        }
-
+        
         #endregion SimpleGrid
 
         #region SquareGrid
@@ -251,7 +185,7 @@ namespace Graph.Pathing
         {
             SimplePriorityQueue<SquareCell> frontier = new SimplePriorityQueue<SquareCell>();
             SquareCell[,] cameFrom = new SquareCell[oGrid.Width, oGrid.Height];
-            int?[,] costSoFar = new int?[oGrid.Width, oGrid.Height];
+            float?[,] costSoFar = new float?[oGrid.Width, oGrid.Height];
             costSoFar[pntStart.X, pntStart.Y] = 0;
 
             frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y), 0);
@@ -275,12 +209,12 @@ namespace Graph.Pathing
                     if (oGrid.GetAt(pntNext.X, pntNext.Y).impassable) // Looking at impassable tile. 
                         continue;
 
-                    int newCost = costSoFar[current.X, current.Y].Value + Dijkstra.GetCost(current, pntNext);
+                    float newCost = costSoFar[current.X, current.Y].Value + Utility.GetCost(current, pntNext);
 
                     if (costSoFar[pntNext.X, pntNext.Y] == null || newCost < costSoFar[pntNext.X, pntNext.Y].Value)
                     {
                         costSoFar[pntNext.X, pntNext.Y] = newCost;
-                        int priority = newCost;
+                        float priority = newCost;
                         frontier.Enqueue(pntNext, priority);
                         cameFrom[pntNext.X, pntNext.Y] = current;
                     }
@@ -319,7 +253,7 @@ namespace Graph.Pathing
             SimplePriorityQueue<SquareCell> frontier = new SimplePriorityQueue<SquareCell>();
             List<SquareCell> lPath = new List<SquareCell>();
             SquareCell[,] cameFrom = new SquareCell[oGrid.Width, oGrid.Height];
-            int?[,] costSoFar = new int?[oGrid.Width, oGrid.Height];
+            float?[,] costSoFar = new float?[oGrid.Width, oGrid.Height];
             costSoFar[pntStart.X, pntStart.Y] = 0;
 
             frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y), 0);
@@ -343,12 +277,12 @@ namespace Graph.Pathing
                     if (oGrid.GetAt(pntNext.X, pntNext.Y).impassable) // Looking at impassable tile. 
                         continue;
 
-                    int newCost = costSoFar[current.X, current.Y].Value + Dijkstra.GetCost(current, pntNext);
+                    float newCost = costSoFar[current.X, current.Y].Value + Utility.GetCost(current, pntNext);
 
                     if (costSoFar[pntNext.X, pntNext.Y] == null || newCost < costSoFar[pntNext.X, pntNext.Y].Value)
                     {
                         costSoFar[pntNext.X, pntNext.Y] = newCost;
-                        int priority = newCost;
+                        float priority = newCost;
                         frontier.Enqueue(pntNext, priority);
                         cameFrom[pntNext.X, pntNext.Y] = current;
                     }
@@ -369,18 +303,7 @@ namespace Graph.Pathing
         {
             return BreadthFirstSearch.GetPath(paths, pntEnd);
         }
-
-        /// <summary>
-        /// Returns the cost difference between the given cells. 
-        /// </summary>
-        /// <param name="current"></param>
-        /// <param name="next"></param>
-        /// <returns></returns>
-        public static int GetCost(SquareCell current, SquareCell next)
-        {
-            return Math.Max(next.cost - current.cost, 0);
-        }
-
+        
         #endregion SquareGrid
 
         #region HexGrid

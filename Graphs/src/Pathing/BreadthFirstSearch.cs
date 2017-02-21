@@ -56,7 +56,7 @@ namespace Graph.Pathing
                 if (current == pntEnd) // Reached goal destination. 
                     break;
 
-                IEnumerable<Point> neighbors = BreadthFirstSearch.GetNeighbors(current, grid);
+                IEnumerable<Point> neighbors = Utility.GetNeighbors(current, grid, true);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
@@ -115,7 +115,7 @@ namespace Graph.Pathing
             {
                 current = frontier.Dequeue();
                 
-                IEnumerable<Point> neighbors = BreadthFirstSearch.GetNeighbors(current, grid);
+                IEnumerable<Point> neighbors = Utility.GetNeighbors(current, grid, true);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
@@ -165,60 +165,6 @@ namespace Graph.Pathing
             lPath.Reverse();
 
             return lPath;
-        }
-
-        /// <summary>
-        /// Returns the coordinates of all neighboring tiles. 
-        /// </summary>
-        /// <param name="pnt"></param>
-        /// <param name="grid"></param>
-        /// <returns></returns>
-        private static IEnumerable<Point> GetNeighbors(Point pnt, int[,] grid)
-        {
-            List<Point> neighbors = new List<Point>();
-
-            Point[] Directions = new Point[] {
-                SquareGrid.East,
-                SquareGrid.South,
-                SquareGrid.West,
-                SquareGrid.North,
-                SquareGrid.SEast,
-                SquareGrid.SWest,
-                SquareGrid.NWest,
-                SquareGrid.NEast
-            };
-
-            int xAt = -1;
-            int yAt = -1;
-
-            for (int i = 0; i < Directions.Length; i++)
-            {
-                xAt = pnt.X + Directions[i].X;
-                yAt = pnt.Y + Directions[i].Y;
-
-                if (!BreadthFirstSearch.IsOutOfBounds(xAt, yAt, grid))
-                {
-                    neighbors.Add(new Point(xAt, yAt));
-                }
-            }
-
-            return neighbors;
-        }
-
-        /// <summary>
-        /// Returns true, if the given coordinates are out of bounds. 
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        private static bool IsOutOfBounds(int x, int y, int[,] grid)
-        {
-            if (x < 0 || y < 0 || x >= grid.GetLength(0) || y >= grid.GetLength(1))
-            {
-                return true;
-            }
-
-            return false;
         }
 
         #endregion SimpleGrid

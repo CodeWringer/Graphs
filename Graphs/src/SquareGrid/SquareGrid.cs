@@ -36,12 +36,7 @@ namespace Graph.Grid
         /// The size of a tile. 
         /// </summary>
         public Size sizeTile { get; private set; }
-
-        /// <summary>
-        /// The origin in world space. Acts as offset for the entire grid. 
-        /// </summary>
-        public Point pntGridOrigin;
-
+        
         /// <summary>
         /// Width of the grid, in tiles. 
         /// </summary>
@@ -104,13 +99,7 @@ namespace Graph.Grid
                 }
             }
         }
-
-        public SquareGrid(int width, int height, Size sizeTile, Point pntGridOrigin)
-            : this(width, height, sizeTile)
-        {
-            this.pntGridOrigin = pntGridOrigin;
-        }
-
+        
         #endregion Constructors
         /*****************************************************************/
         // Methods
@@ -316,7 +305,7 @@ namespace Graph.Grid
         /// <summary>
         /// Pathing cost of this cell. 
         /// </summary>
-        public int cost;
+        public float cost;
         /// <summary>
         /// If true, renders this tile as impassable to path finding. 
         /// </summary>
@@ -328,6 +317,19 @@ namespace Graph.Grid
         {
             get { return new Point(this.X, this.Y); }
             private set { }
+        }
+
+        public float Cost
+        {
+            get
+            {
+                return cost;
+            }
+
+            set
+            {
+                cost = value;
+            }
         }
 
         #endregion Declarations
@@ -342,10 +344,10 @@ namespace Graph.Grid
             this.Y = y;
         }
 
-        public SquareCell(int x, int y, int cost, bool impassable)
+        public SquareCell(int x, int y, float cost, bool impassable)
             : this(x, y)
         {
-            this.cost = cost;
+            this.Cost = cost;
             this.impassable = impassable;
         }
 

@@ -7,8 +7,8 @@
     <ProjectGuid>{716922F1-0BD4-4D30-A32E-A872A93C6A7C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Graphs</RootNamespace>
-    <AssemblyName>Graphs</AssemblyName>
+    <RootNamespace>Graph</RootNamespace>
+    <AssemblyName>Graph</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -53,6 +53,7 @@
     <Compile Include="src\Pathing\AStar.cs" />
     <Compile Include="src\Pathing\BreadthFirstSearch.cs" />
     <Compile Include="src\Pathing\Dijkstra.cs" />
+    <Compile Include="src\Pathing\Utility.cs" />
     <Compile Include="src\SquareGrid\SquareGrid.cs" />
     <Compile Include="src\Graph.cs" />
   </ItemGroup>

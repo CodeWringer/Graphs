@@ -55,12 +55,7 @@ namespace Graph.Grid
         /// The size of a hexagon's side. 
         /// </summary>
         public int sizeHex { get; private set; }
-
-        /// <summary>
-        /// The origin in world space. Acts as offset for the entire grid. 
-        /// </summary>
-        public Point pntGridOrigin;
-
+        
         /// <summary>
         /// A hexagon at location 0,0,0
         /// </summary>
@@ -322,10 +317,7 @@ namespace Graph.Grid
 
             // Move to cartesian position. 
             polyHex = HexagonGrid.OffsetPoly(polyHex, pntCart);
-
-            // Apply global offset. 
-            polyHex = HexagonGrid.OffsetPoly(polyHex, this.pntGridOrigin);
-
+            
             return polyHex;
         }
 
@@ -628,7 +620,7 @@ namespace Graph.Grid
         /// <summary>
         /// Pathing cost of this cell. 
         /// </summary>
-        public int cost;
+        public float cost;
         /// <summary>
         /// If true, renders this tile as impassable to path finding. 
         /// </summary>
