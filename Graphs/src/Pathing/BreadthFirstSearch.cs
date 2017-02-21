@@ -34,11 +34,11 @@ namespace Graph.Pathing
         /// Does an early exit. 
         /// </remarks>
         /// <param name="pntStart">A node to begin the search at. </param>
-        /// <param name="pntEnd">A node to end the search at. </param>
+        /// <param name="pntGoal">A node to end the search at. </param>
         /// <param name="grid">The grid to search on. </param>
         /// <param name="tileImpassable">The number associated with impassable tiles. </param>
         /// <returns></returns>
-        public static IEnumerable<Point> GetPath(Point pntStart, Point pntEnd, int[,] grid, int tileImpassable)
+        public static IEnumerable<Point> GetPath(Point pntStart, Point pntGoal, int[,] grid, int tileImpassable)
         {
             Queue<Point> frontier = new Queue<Point>();
             List<Point> lPath = new List<Point>();
@@ -46,17 +46,17 @@ namespace Graph.Pathing
 
             frontier.Enqueue(pntStart);
             cameFrom[pntStart.X, pntStart.Y] = null;
-            Point current;
+            Point nodeCurrent = new Point();
 
             // Traverse map. 
             while (frontier.Count() != 0)
             {
-                current = frontier.Dequeue();
+                nodeCurrent = frontier.Dequeue();
 
-                if (current == pntEnd) // Reached goal destination. 
+                if (nodeCurrent == pntGoal) // Reached goal destination. 
                     break;
 
-                IEnumerable<Point> neighbors = Utility.GetNeighbors(current, grid, true);
+                IEnumerable<Point> neighbors = Utility.GetNeighbors(nodeCurrent, grid, true);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
@@ -68,26 +68,12 @@ namespace Graph.Pathing
                     if (cameFrom[pntNext.X, pntNext.Y] == null)
                     {
                         frontier.Enqueue(pntNext);
-                        cameFrom[pntNext.X, pntNext.Y] = current;
+                        cameFrom[pntNext.X, pntNext.Y] = nodeCurrent;
                     }
                 }
             }
 
-            if (cameFrom[pntEnd.X, pntEnd.Y] == null) // Could not find path. 
-                return null;
-
-            // Construct path. 
-            current = pntEnd;
-            lPath.Add(current);
-            while (current != pntStart)
-            {
-                current = cameFrom[current.X, current.Y].Value;
-                lPath.Add(current);
-            }
-            lPath.Add(pntStart);
-            lPath.Reverse();
-
-            return lPath;
+            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
         }
 
         /// <summary>
@@ -145,26 +131,9 @@ namespace Graph.Pathing
         /// <param name="paths">A grid of 'came from' locations. </param>
         /// <param name="pntStart">A starting location. </param>
         /// <returns></returns>
-        public static IEnumerable<Point> GetPath(Point?[,] paths, Point pntEnd)
+        public static IEnumerable<Point> GetPath(Point?[,] paths, Point pntGoal)
         {
-            List<Point> lPath = new List<Point>();
-
-            // Construct path. 
-            lPath.Add(pntEnd);
-            Point current = paths[pntEnd.X, pntEnd.Y].Value;
-            lPath.Add(current);
-
-            if (current == null)
-                return lPath;
-
-            while (paths[current.X, current.Y] != null)
-            {
-                current = paths[current.X, current.Y].Value;
-                lPath.Add(current);
-            }
-            lPath.Reverse();
-
-            return lPath;
+            return Utility.ConstructPath(paths, pntGoal);
         }
 
         #endregion SimpleGrid
@@ -175,10 +144,10 @@ namespace Graph.Pathing
         /// Finds a path on the given grid and returns the path, beginning with the given start node. 
         /// </summary>
         /// <param name="pntStart">A node to begin the search at. </param>
-        /// <param name="pntEnd">A node to end the search at. </param>
+        /// <param name="pntGoal">A node to end the search at. </param>
         /// <param name="oGrid">The grid do to the search with. </param>
         /// <returns></returns>
-        public static IEnumerable<SquareCell> GetPath(Point pntStart, Point pntEnd, SquareGrid oGrid)
+        public static IEnumerable<SquareCell> GetPath(Point pntStart, Point pntGoal, SquareGrid oGrid)
         {
             Queue<SquareCell> frontier = new Queue<SquareCell>();
             List<SquareCell> lPath = new List<SquareCell>();
@@ -186,48 +155,34 @@ namespace Graph.Pathing
 
             frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y));
             cameFrom[pntStart.X, pntStart.Y] = null;
-            SquareCell current;
+            SquareCell nodeCurrent = null;
 
             // Traverse map. 
             while (frontier.Count() != 0)
             {
-                current = frontier.Dequeue();
+                nodeCurrent = frontier.Dequeue();
 
-                if (current == oGrid.GetAt(pntEnd.X, pntEnd.Y)) // Reached goal destination. 
+                if (nodeCurrent == oGrid.GetAt(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
                     break;
 
-                IEnumerable<SquareCell> neighbors = oGrid.GetNeighbors(current.Location, true);
+                IEnumerable<SquareCell> neighbors = oGrid.GetNeighbors(nodeCurrent.Location, true);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
-                    SquareCell pntNext = neighbors.ElementAt(next);
+                    SquareCell nodeNext = neighbors.ElementAt(next);
 
-                    if (oGrid.GetAt(pntNext.X, pntNext.Y).impassable) // Looking at impassable tile. 
+                    if (oGrid.GetAt(nodeNext.X, nodeNext.Y).impassable) // Looking at impassable tile. 
                         continue;
 
-                    if (cameFrom[pntNext.X, pntNext.Y] == null)
+                    if (cameFrom[nodeNext.X, nodeNext.Y] == null)
                     {
-                        frontier.Enqueue(pntNext);
-                        cameFrom[pntNext.X, pntNext.Y] = current;
+                        frontier.Enqueue(nodeNext);
+                        cameFrom[nodeNext.X, nodeNext.Y] = nodeCurrent;
                     }
                 }
             }
 
-            if (cameFrom[pntEnd.X, pntEnd.Y] == null) // Could not find path. 
-                return null;
-
-            // Construct path. 
-            current = oGrid.GetAt(pntEnd.X, pntEnd.Y);
-            lPath.Add(current);
-            while (current != oGrid.GetAt(pntStart.X, pntStart.Y))
-            {
-                current = cameFrom[current.X, current.Y];
-                lPath.Add(current);
-            }
-            lPath.Add(oGrid.GetAt(pntStart.X, pntStart.Y));
-            lPath.Reverse();
-
-            return lPath;
+            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
         }
 
         /// <summary>
@@ -281,26 +236,9 @@ namespace Graph.Pathing
         /// <param name="paths">A grid of 'came from' locations. </param>
         /// <param name="pntStart">A starting location. </param>
         /// <returns></returns>
-        public static IEnumerable<SquareCell> GetPath(SquareCell[,] paths, Point pntEnd)
+        public static IEnumerable<SquareCell> GetPath(SquareCell[,] paths, Point pntGoal)
         {
-            List<SquareCell> lPath = new List<SquareCell>();
-
-            // Construct path. 
-            lPath.Add(new SquareCell(pntEnd.X, pntEnd.Y));
-            SquareCell current = paths[pntEnd.X, pntEnd.Y];
-            lPath.Add(current);
-
-            if (current == null)
-                return lPath;
-
-            while (paths[current.X, current.Y] != null)
-            {
-                current = paths[current.X, current.Y];
-                lPath.Add(current);
-            }
-            lPath.Reverse();
-
-            return lPath;
+            return Utility.ConstructPath(paths, pntGoal);
         }
 
         #endregion SquareGrid

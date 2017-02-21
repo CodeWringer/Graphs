@@ -124,31 +124,215 @@ namespace Graph.Pathing
         /// <returns></returns>
         internal static float GetCost(SquareCell cellA, SquareCell cellB, float costDiagonal = 1.0F)
         {
-            float cost = Math.Max(cellB.Cost - cellA.Cost, 1.0F);
+            float cost = Math.Max(cellB.cost - cellA.cost, 1.0F);
 
             return costDiagonal > 0 ? (cost * costDiagonal) : cost;
         }
 
         /// <summary>
-        /// Returns the heuristic value for the given points. 
+        /// Returns the Manhattan distance. 
         /// </summary>
         /// <param name="goal">A point representing the goal position. </param>
         /// <param name="point">A point to get the heuristic for. </param>
+        /// <param name="D">The minimum cost between any adjacent nodes. </param>
         /// <returns></returns>
-        internal static float GetHeuristic(Point goal, Point point)
+        internal static float GetHeuristicManhattan(Point goal, Point point, float D)
         {
-            return Math.Abs(goal.X - point.X) + Math.Abs(goal.Y - point.Y);
+            float dx = Math.Abs(point.X - goal.X);
+            float dy = Math.Abs(point.Y - goal.Y);
+            return D * (dx + dy);
         }
 
         /// <summary>
-        /// Returns the heuristic value for the given cells. 
+        /// Returns the diagonal distance. 
         /// </summary>
-        /// <param name="goal">A cell representing the goal position. </param>
-        /// <param name="cell">A cell to get the heuristic for. </param>
+        /// <param name="goal">A point representing the goal position. </param>
+        /// <param name="point">A point to get the heuristic for. </param>
+        /// <param name="D">The minimum cost between any adjacent nodes. </param>
+        /// <param name="D2">The cost of moving diagonally. </param>
         /// <returns></returns>
-        internal static float GetHeuristic(SquareCell goal, SquareCell cell)
+        internal static float GetHeuristicDiagonal(Point goal, Point point, float D, float D2)
         {
-            return Math.Abs(goal.X - cell.X) + Math.Abs(goal.Y - cell.Y);
+            float dx = Math.Abs(point.X - goal.X);
+            float dy = Math.Abs(point.Y - goal.Y);
+            return D * (dx + dy) + (D2 - 2 * D) * Math.Min(dx, dy);
+        }
+
+        /// <summary>
+        /// Returns the Euclidean distance. 
+        /// </summary>
+        /// <param name="goal"></param>
+        /// <param name="point"></param>
+        /// <param name="D"></param>
+        /// <returns></returns>
+        internal static float GetHeuristicEuclidean(Point goal, Point point, float D)
+        {
+            float dx = Math.Abs(point.X - goal.X);
+            float dy = Math.Abs(point.Y - goal.Y);
+            return D * (float)Math.Sqrt(dx * dx + dy * dy);
+        }
+        
+        /// <summary>
+        /// Returns the lowest cost of all the neighboring nodes of the given node. 
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="oGrid"></param>
+        /// <param name="costDiagonal"></param>
+        /// <returns></returns>
+        internal static float GetLowestCost(SquareCell node, SquareGrid oGrid, float costDiagonal)
+        {
+            IEnumerable<SquareCell> neighbors = null;
+            float costLowest = float.MaxValue;
+
+            if (costDiagonal <= 0)
+                neighbors = oGrid.GetNeighbors(node.Location, false);
+            else
+                neighbors = oGrid.GetNeighbors(node.Location, true);
+
+            foreach (SquareCell nodeNeighbor in neighbors)
+            {
+                if (nodeNeighbor.cost < costLowest)
+                    costLowest = nodeNeighbor.cost;
+            }
+            return costLowest;
+        }
+
+        /// <summary>
+        /// Returns the lowest cost of all the neighboring nodes of the given node. 
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="costDiagonal"></param>
+        /// <returns></returns>
+        internal static float GetLowestCost(Point node, int[,] grid, int[,] gridCost, float costDiagonal)
+        {
+            IEnumerable<Point> neighbors = null;
+            float costLowest = float.MaxValue;
+
+            if (costDiagonal <= 0)
+                neighbors = Utility.GetNeighbors(node, grid, false);
+            else
+                neighbors = Utility.GetNeighbors(node, grid, true);
+
+            foreach (Point nodeNeighbor in neighbors)
+            {
+                float costNeighbor = gridCost[nodeNeighbor.X, nodeNeighbor.Y];
+                if (costNeighbor < costLowest)
+                    costLowest = costNeighbor;
+            }
+            return costLowest;
+        }
+
+        /// <summary>
+        /// Returns a path constructed from the given parameters. 
+        /// </summary>
+        /// <param name="nodeCurrent"></param>
+        /// <param name="pntStart"></param>
+        /// <param name="pntGoal"></param>
+        /// <param name="cameFrom"></param>
+        /// <returns></returns>
+        internal static IEnumerable<Point> ConstructPath(Point nodeCurrent, Point pntStart, Point pntGoal, Point?[,] cameFrom)
+        {
+            if (cameFrom[pntGoal.X, pntGoal.Y] == null) // Could not find path. 
+                return null;
+
+            List<Point> lPath = new List<Point>();
+            nodeCurrent = pntGoal;
+            lPath.Add(nodeCurrent);
+            while (nodeCurrent != pntStart)
+            {
+                nodeCurrent = cameFrom[nodeCurrent.X, nodeCurrent.Y].Value;
+                lPath.Add(nodeCurrent);
+            }
+            lPath.Add(pntStart);
+            lPath.Reverse();
+
+            return lPath;
+        }
+
+        /// <summary>
+        /// Returns a path constructed from the given parameters. 
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="pntStart"></param>
+        /// <param name="pntGoal"></param>
+        /// <param name="oGrid"></param>
+        /// <param name="cameFrom"></param>
+        /// <returns></returns>
+        internal static IEnumerable<SquareCell> ConstructPath(SquareCell node, Point pntStart, Point pntGoal, SquareCell[,] cameFrom)
+        {
+            if (cameFrom[pntGoal.X, pntGoal.Y] == null) // Could not find path. 
+                return null;
+
+            List<SquareCell> lPath = new List<SquareCell>();
+            node = cameFrom[pntGoal.X, pntGoal.Y];
+            lPath.Add(node);
+            while (node != cameFrom[pntStart.X, pntStart.Y])
+            {
+                node = cameFrom[node.X, node.Y];
+                lPath.Add(node);
+            }
+            lPath.Add(cameFrom[pntStart.X, pntStart.Y]);
+            lPath.Reverse();
+
+            return lPath;
+        }
+
+        /// <summary>
+        /// Returns a path constructed from the given grid, at the given end location. 
+        /// The path leads to the starting location that can be found via the grid traversal. 
+        /// </summary>
+        /// <param name="paths">A grid of 'came from' locations. </param>
+        /// <param name="pntStart">A starting location. </param>
+        /// <returns></returns>
+        public static IEnumerable<SquareCell> ConstructPath(SquareCell[,] paths, Point pntGoal)
+        {
+            List<SquareCell> lPath = new List<SquareCell>();
+
+            // Construct path. 
+            lPath.Add(new SquareCell(pntGoal.X, pntGoal.Y));
+            SquareCell current = paths[pntGoal.X, pntGoal.Y];
+            lPath.Add(current);
+
+            if (current == null)
+                return lPath;
+
+            while (paths[current.X, current.Y] != null)
+            {
+                current = paths[current.X, current.Y];
+                lPath.Add(current);
+            }
+            lPath.Reverse();
+
+            return lPath;
+        }
+
+        /// <summary>
+        /// Returns a path constructed from the given grid, at the given end location. 
+        /// The path leads to the starting location that can be found via the grid traversal. 
+        /// </summary>
+        /// <param name="paths">A grid of 'came from' locations. </param>
+        /// <param name="pntStart">A starting location. </param>
+        /// <returns></returns>
+        public static IEnumerable<Point> ConstructPath(Point?[,] paths, Point pntGoal)
+        {
+            List<Point> lPath = new List<Point>();
+
+            // Construct path. 
+            lPath.Add(pntGoal);
+            Point current = paths[pntGoal.X, pntGoal.Y].Value;
+            lPath.Add(current);
+
+            if (current == null)
+                return lPath;
+
+            while (paths[current.X, current.Y] != null)
+            {
+                current = paths[current.X, current.Y].Value;
+                lPath.Add(current);
+            }
+            lPath.Reverse();
+
+            return lPath;
         }
 
         #endregion Methods

@@ -33,74 +33,72 @@ namespace Graph.Pathing
         /// Finds a path on the given grid and returns the path, beginning with the given start node. 
         /// </summary>
         /// <param name="pntStart">A node to begin the search at. </param>
-        /// <param name="pntEnd">A node to end the search at. </param>
+        /// <param name="pntGoal">A node to end the search at. </param>
         /// <param name="grid">The grid to search on. </param>
         /// <param name="tileImpassable">The number associated with impassable tiles. </param>
         /// <param name="costDiagonal">A cost multiplication factor for diagonal tiles. A value of less than 
         /// or equal to 0 means no diagonal searching is allowed. </param>
         /// <returns></returns>
-        public static IEnumerable<Point> GetPath(Point pntStart, Point pntEnd, int[,] grid, int[,] gridCost, int tileImpassable, float costDiagonal = 1.4F)
+        public static IEnumerable<Point> GetPath(Point pntStart, Point pntGoal, int[,] grid, int[,] gridCost, int tileImpassable, float costDiagonal = 1.4F)
         {
             SimplePriorityQueue<Point> frontier = new SimplePriorityQueue<Point>();
-            List<Point> lPath = new List<Point>();
             Point?[,] cameFrom = new Point?[grid.GetLength(0), grid.GetLength(1)];
             float?[,] costSoFar = new float?[grid.GetLength(0), grid.GetLength(1)];
             costSoFar[pntStart.X, pntStart.Y] = 0;
 
             frontier.Enqueue(pntStart, 0);
             cameFrom[pntStart.X, pntStart.Y] = null;
-            Point current;
+            Point nodeCurrent = new Point(); ;
 
             // Traverse map. 
             while (frontier.Count() != 0)
             {
-                current = frontier.Dequeue();
+                nodeCurrent = frontier.Dequeue();
 
-                if (current == pntEnd) // Reached goal destination. 
+                if (nodeCurrent == pntGoal) // Reached goal destination. 
                     break;
 
                 IEnumerable<Point> neighbors = null;
 
                 if (costDiagonal <= 0)
-                    neighbors = Utility.GetNeighbors(current, grid, false);
+                    neighbors = Utility.GetNeighbors(nodeCurrent, grid, false);
                 else
-                    neighbors = Utility.GetNeighbors(current, grid, true);
+                    neighbors = Utility.GetNeighbors(nodeCurrent, grid, true);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
-                    Point pntNext = neighbors.ElementAt(next);
+                    Point nodeNext = neighbors.ElementAt(next);
 
-                    if (grid[pntNext.X, pntNext.Y] == tileImpassable) // Looking at impassable tile. 
+                    if (grid[nodeNext.X, nodeNext.Y] == tileImpassable) // Looking at impassable tile. 
                         continue;
 
                     // Get cost. 
-                    float newCost = costSoFar[current.X, current.Y].Value + Utility.GetCost(gridCost, current, pntNext, costDiagonal);
+                    float newCost = costSoFar[nodeCurrent.X, nodeCurrent.Y].Value + Utility.GetCost(gridCost, nodeCurrent, nodeNext, costDiagonal);
 
-                    if (costSoFar[pntNext.X, pntNext.Y] == null || newCost < costSoFar[pntNext.X, pntNext.Y].Value)
+                    if (costSoFar[nodeNext.X, nodeNext.Y] == null || newCost < costSoFar[nodeNext.X, nodeNext.Y].Value)
                     {
-                        costSoFar[pntNext.X, pntNext.Y] = newCost;
-                        float priority = newCost + Utility.GetHeuristic(pntEnd, pntNext);
-                        frontier.Enqueue(pntNext, priority);
-                        cameFrom[pntNext.X, pntNext.Y] = current;
+                        costSoFar[nodeNext.X, nodeNext.Y] = newCost;
+
+                        float priority = 0;
+                        float D = Utility.GetLowestCost(nodeNext, grid, gridCost, costDiagonal);
+
+                        if (costDiagonal > 0)
+                        {
+                            float D2 = Utility.GetCost(gridCost, nodeCurrent, nodeNext, costDiagonal);
+                            priority = newCost + Utility.GetHeuristicDiagonal(pntGoal, nodeNext, D, D2);
+                        }
+                        else
+                        {
+                            priority = newCost + Utility.GetHeuristicManhattan(pntGoal, nodeNext, D);
+                        }
+
+                        frontier.Enqueue(nodeNext, priority);
+                        cameFrom[nodeNext.X, nodeNext.Y] = nodeCurrent;
                     }
                 }
             }
 
-            if (cameFrom[pntEnd.X, pntEnd.Y] == null) // Could not find path. 
-                return null;
-
-            // Construct path. 
-            current = pntEnd;
-            lPath.Add(current);
-            while (current != pntStart)
-            {
-                current = cameFrom[current.X, current.Y].Value;
-                lPath.Add(current);
-            }
-            lPath.Add(pntStart);
-            lPath.Reverse();
-
-            return lPath;
+            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
         }
         
         #endregion SimpleGrid
@@ -110,77 +108,74 @@ namespace Graph.Pathing
         /// <summary>
         /// Finds a path on the given grid and returns the path, beginning with the given start node. 
         /// </summary>
-        /// <remarks>
-        /// Does an early exit. 
-        /// </remarks>
         /// <param name="pntStart">A node to begin the search at. </param>
-        /// <param name="pntEnd">A node to end the search at. </param>
+        /// <param name="pntGoal">A node to end the search at. </param>
         /// <param name="oGrid">The grid do to the search with. </param>
         /// <param name="costDiagonal">A cost multiplication factor for diagonal tiles. A value of less than 
         /// or equal to 0 means no diagonal searching is allowed. </param>
         /// <returns></returns>
-        public static IEnumerable<SquareCell> GetPath(Point pntStart, Point pntEnd, SquareGrid oGrid, float costDiagonal = 1.4F)
+        public static IEnumerable<SquareCell> GetPath(Point pntStart, Point pntGoal, SquareGrid oGrid, float costDiagonal = 1.4F)
         {
             SimplePriorityQueue<SquareCell> frontier = new SimplePriorityQueue<SquareCell>();
             SquareCell[,] cameFrom = new SquareCell[oGrid.Width, oGrid.Height];
             float?[,] costSoFar = new float?[oGrid.Width, oGrid.Height];
             costSoFar[pntStart.X, pntStart.Y] = 0;
 
+            bool allowDiagonal = costDiagonal > 0 ? true : false;
+
             frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y), 0);
             cameFrom[pntStart.X, pntStart.Y] = null;
-            SquareCell current;
+            SquareCell nodeCurrent = null;
 
             // Traverse map. 
             while (frontier.Count() != 0)
             {
-                current = frontier.Dequeue();
+                nodeCurrent = frontier.Dequeue();
 
-                if (current == oGrid.GetAt(pntEnd.X, pntEnd.Y)) // Reached goal destination. 
+                if (nodeCurrent == oGrid.GetAt(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
                     break;
 
                 IEnumerable<SquareCell> neighbors = null;
 
-                if (costDiagonal <= 0)
-                    neighbors = oGrid.GetNeighbors(current.Location, false);
+                if (allowDiagonal)
+                    neighbors = oGrid.GetNeighbors(nodeCurrent.Location, true);
                 else
-                    neighbors = oGrid.GetNeighbors(current.Location, true);
+                    neighbors = oGrid.GetNeighbors(nodeCurrent.Location, false);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
-                    SquareCell pntNext = neighbors.ElementAt(next);
+                    SquareCell nodeNext = neighbors.ElementAt(next);
 
-                    if (oGrid.GetAt(pntNext.X, pntNext.Y).impassable) // Looking at impassable tile. 
+                    if (oGrid.GetAt(nodeNext.X, nodeNext.Y).impassable) // Looking at impassable tile. 
                         continue;
 
                     // Get cost. 
-                    float newCost = costSoFar[current.X, current.Y].Value + Utility.GetCost(current, pntNext, costDiagonal);
+                    float newCost = costSoFar[nodeCurrent.X, nodeCurrent.Y].Value + Utility.GetCost(nodeCurrent, nodeNext, costDiagonal);
 
-                    if (costSoFar[pntNext.X, pntNext.Y] == null || newCost < costSoFar[pntNext.X, pntNext.Y].Value)
+                    if (costSoFar[nodeNext.X, nodeNext.Y] == null || newCost < costSoFar[nodeNext.X, nodeNext.Y].Value)
                     {
-                        costSoFar[pntNext.X, pntNext.Y] = newCost;
-                        float priority = newCost + Utility.GetHeuristic(oGrid.GetAt(pntEnd.X, pntEnd.Y), pntNext);
-                        frontier.Enqueue(pntNext, priority);
-                        cameFrom[pntNext.X, pntNext.Y] = current;
+                        costSoFar[nodeNext.X, nodeNext.Y] = newCost;
+
+                        float priority = 0;
+                        float D = Utility.GetLowestCost(nodeNext, oGrid, costDiagonal);
+
+                        if (costDiagonal > 0)
+                        {
+                            float D2 = Utility.GetCost(nodeCurrent, nodeNext, costDiagonal) * costDiagonal;
+                            priority = newCost + Utility.GetHeuristicDiagonal(pntGoal, nodeNext.Location, D, D2);
+                        }
+                        else
+                        {
+                            priority = newCost + Utility.GetHeuristicManhattan(pntGoal, nodeNext.Location, D);
+                        }
+
+                        frontier.Enqueue(nodeNext, priority);
+                        cameFrom[nodeNext.X, nodeNext.Y] = nodeCurrent;
                     }
                 }
             }
 
-            if (cameFrom[pntEnd.X, pntEnd.Y] == null) // Could not find path. 
-                return null;
-
-            // Construct path. 
-            List<SquareCell> lPath = new List<SquareCell>();
-            current = oGrid.GetAt(pntEnd.X, pntEnd.Y);
-            lPath.Add(current);
-            while (current != oGrid.GetAt(pntStart.X, pntStart.Y))
-            {
-                current = cameFrom[current.X, current.Y];
-                lPath.Add(current);
-            }
-            lPath.Add(oGrid.GetAt(pntStart.X, pntStart.Y));
-            lPath.Reverse();
-
-            return lPath;
+            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
         }
         
         #endregion SquareGrid

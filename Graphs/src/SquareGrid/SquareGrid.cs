@@ -311,25 +311,12 @@ namespace Graph.Grid
         /// </summary>
         public bool impassable;
         /// <summary>
-        /// The coordinate locationo f this cell. 
+        /// The coordinate location of this cell. 
         /// </summary>
         public Point Location
         {
             get { return new Point(this.X, this.Y); }
             private set { }
-        }
-
-        public float Cost
-        {
-            get
-            {
-                return cost;
-            }
-
-            set
-            {
-                cost = value;
-            }
         }
 
         #endregion Declarations
@@ -347,7 +334,7 @@ namespace Graph.Grid
         public SquareCell(int x, int y, float cost, bool impassable)
             : this(x, y)
         {
-            this.Cost = cost;
+            this.cost = cost;
             this.impassable = impassable;
         }
 
