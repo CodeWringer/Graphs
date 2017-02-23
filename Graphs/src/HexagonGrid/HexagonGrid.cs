@@ -18,6 +18,9 @@ namespace Graph.Grid
     /// - Define data structure for "grid" of hexagons. 
     ///     - Rectangle shape
     ///     - Hexagon shape
+    ///     - Cube coordinates
+    ///     - Offset coordinates
+    ///     - Cartesian coordinates
     /// - Populate a grid with hexagons. 
     /// - Iterate entire grid. 
     /// - Getting hexagon neighbor(s). 
@@ -42,9 +45,19 @@ namespace Graph.Grid
         #region Declarations
 
         /// <summary>
-        /// A two dimensional array, representing the grid. 
+        /// A dictionary of cube coordinates associated with cells. 
         /// </summary>
-        public HexCell[,] grid { get; private set; }
+        private Dictionary<csPoint3, HexagonCell> dictCellCube;
+
+        /// <summary>
+        /// A dictionary of offset coordinates associated with cells. 
+        /// </summary>
+        private Dictionary<Point, HexagonCell> dictCellOffset;
+
+        /// <summary>
+        /// A list of all cells. 
+        /// </summary>
+        public List<HexagonCell> lCell { get; private set; }
 
         /// <summary>
         /// Determines the orientation of the hexagons. If true, the pointy side will point upwards. 
@@ -144,6 +157,10 @@ namespace Graph.Grid
 
             this.vectPerpR = vectNormR.GetPerpendicular();
             this.vectPerpB = vectNormB.GetPerpendicular();
+
+            this.dictCellCube = new Dictionary<csPoint3, HexagonCell>();
+            this.dictCellOffset = new Dictionary<Point, HexagonCell>();
+            this.lCell = new List<HexagonCell>();
         }
 
         /// <summary>
@@ -177,6 +194,8 @@ namespace Graph.Grid
         /*****************************************************************/
         #region Methods
 
+        #region CreateGrid
+
         /// <summary>
         /// Creates a rectangular grid of hexagons. 
         /// </summary>
@@ -184,17 +203,22 @@ namespace Graph.Grid
         /// <param name="height"></param>
         private void CreateGrid(int width, int height)
         {
-            throw new NotImplementedException();
-
-            // Create new grid. 
-            this.grid = new HexCell[width, height];
-
             // Fill grid with cells. 
-            for (int x = 0; x < this.grid.GetLength(0); x++)
+            for (int q = 0; q < width; q++)
             {
-                for (int y = 0; y < this.grid.GetLength(1); y++)
+                for (int r = 0; r < height; r++)
                 {
-                    //this.grid[x, y] = new HexCell(x, y);
+                    // Get coordinates. 
+                    Point offsetCoords = new Point(q, r);
+                    csPoint3 cubeCoords = this.GetREvenToCube(offsetCoords);
+
+                    // Create new cell. 
+                    HexagonCell oCell = new HexagonCell(cubeCoords);
+
+                    // Add cell to data structure. 
+                    this.lCell.Add(oCell);
+                    this.dictCellCube.Add(cubeCoords, oCell);
+                    this.dictCellOffset.Add(offsetCoords, oCell);
                 }
             }
         }
@@ -207,6 +231,10 @@ namespace Graph.Grid
         {
             throw new NotImplementedException();
         }
+
+        #endregion CreateGrid
+
+        #region Polygon
 
         /// <summary>
         /// Returns a polygon for a hexagon at the given point, with the given size. 
@@ -275,13 +303,21 @@ namespace Graph.Grid
             );
         }
 
+        #endregion Polygon
+
+        #region GetNodePoly
+
         /// <summary>
-        /// Returns a hexagon at the given cube coordinates. 
+        /// Returns the points of a hexagon at the given cube coordinates. 
         /// </summary>
         /// <param name="cubeCoords">Cube coordinates of the hex to get. </param>
+        /// <remarks>
+        /// Works with any permutation of cube axes. 
+        /// Probably slower, but untested. 
+        /// </remarks>
         /// <returns></returns>
-        [Obsolete("Use \"CalcHexPolyAt\" instead. ")]
-        public IEnumerable<PointF> CalcHexPolyAt_Old(csPoint3 cubeCoords)
+        [Obsolete("Use method \"GetNodePoly\" instead. ")]
+        public IEnumerable<PointF> GetNodePoly_Old(csPoint3 cubeCoords)
         {
             IEnumerable<PointF> hexPoly = HexagonGrid.GetHexPoly(sizeHex, pointyTop);
 
@@ -290,75 +326,98 @@ namespace Graph.Grid
             csVector2 vectOnB = vectNormB.GetScaled(this.sizeStep * cubeCoords.Z);
 
             // Points on the axes to test with. 
-            PointF pntOnR = new PointF((float)vectOnR.X, (float)vectOnR.Y);
-            PointF pntOnB = new PointF((float)vectOnB.X, (float)vectOnB.Y);
+            PointD pntOnR = new PointD(vectOnR.X, vectOnR.Y);
+            PointD pntOnB = new PointD(vectOnB.X, vectOnB.Y);
 
-            PointF pntPerpR = new PointF(pntOnR.X + (float)this.vectPerpR.X, pntOnR.Y + (float)this.vectPerpR.Y);
-            PointF pntPerpB = new PointF(pntOnB.X + (float)this.vectPerpB.X, pntOnB.Y + (float)this.vectPerpB.Y);
+            PointD pntPerpR = new PointD(pntOnR.X + this.vectPerpR.X, pntOnR.Y + this.vectPerpR.Y);
+            PointD pntPerpB = new PointD(pntOnB.X + this.vectPerpB.X, pntOnB.Y + this.vectPerpB.Y);
 
             // The intersection point represents the center of the desired hexagon. 
-            PointF? pntIntersect = csMaths.GetLineIntersection(pntOnR, pntPerpR, pntOnB, pntPerpB);
+            PointD? pntIntersect = csMaths.GetLineIntersection(pntOnR, pntPerpR, pntOnB, pntPerpB);
 
-            return HexagonGrid.OffsetPoly(hexPoly, new PointF(pntIntersect.Value.X, pntIntersect.Value.Y));
+            return HexagonGrid.OffsetPoly(hexPoly, new PointD(pntIntersect.Value.X, pntIntersect.Value.Y));
         }
 
         /// <summary>
-        /// Returns a new hexagon at the given cube coordinates. 
+        /// Returns the points of a hexagon at the given cube coordinates. 
         /// </summary>
         /// <param name="cubeCoords">Cube coordinates of the hex to get. </param>
         /// <returns></returns>
-        public IEnumerable<PointF> CalcHexPolyAt(csPoint3 cubeCoords)
+        public IEnumerable<PointF> GetNodePoly(csPoint3 cubeCoords)
         {
             // Convert to cartesian coordinates. 
-            PointF pntCart = this.GetCartesian(cubeCoords);
+            PointF cartesianCoords = this.GetCubeToCartesian(cubeCoords);
             
             // Get new hexagon at origin. 
             IEnumerable<PointF> polyHex = HexagonGrid.GetHexPoly(this.sizeHex, this.pointyTop);
 
             // Move to cartesian position. 
-            polyHex = HexagonGrid.OffsetPoly(polyHex, pntCart);
+            polyHex = HexagonGrid.OffsetPoly(polyHex, cartesianCoords);
             
             return polyHex;
         }
 
         /// <summary>
-        /// Returns a new hexagon at the given cartesian coordinates. 
+        /// Returns the points of a hexagon at the given cartesian coordinates. 
         /// </summary>
         /// <param name="cartesianCoords">Cartesian coordinates of the hex to get. </param>
         /// <returns></returns>
-        public IEnumerable<PointF> CalcHexPolyAt(PointF cartesianCoords)
+        public IEnumerable<PointF> GetNodePoly(PointF cartesianCoords)
         {
             // Convert cartesian to cube coordinates. 
-            csPoint3 pntCube = this.GetCube(cartesianCoords);
+            csPoint3 pntCube = this.GetCartesianToCube(cartesianCoords);
 
             // Get polygon. 
-            return this.CalcHexPolyAt(new csPoint3(pntCube.X, pntCube.Y, pntCube.Z));
+            return this.GetNodePoly(new csPoint3(pntCube.X, pntCube.Y, pntCube.Z));
         }
 
+        #endregion GetNodePoly
+
+        #region GetNode
+
         /// <summary>
-        /// Returns a hexagon at the given cube coordinates. 
+        /// Returns a node at the given cube coordinates. 
         /// </summary>
-        /// <param name="cubeCoords">Cube coordinates of the hex to get. </param>
+        /// <param name="cubeCoords">Cube coordinates of the node to get. </param>
         /// <returns></returns>
-        public IEnumerable<PointF> GetHexPolyAt(csPoint3 cubeCoords)
+        public HexagonCell GetNode(csPoint3 cubeCoords)
         {
-            throw new NotImplementedException();
-            //TODO: Get hex from grid. 
+            HexagonCell oCell = null;
+            this.dictCellCube.TryGetValue(cubeCoords, out oCell);
+            return oCell;
         }
 
         /// <summary>
-        /// Returns a hexagon at the given cartesian coordinates. 
+        /// Returns a node at the given offset coordinates. 
         /// </summary>
-        /// <param name="cartesianCoords">Cartesian coordinates of the hex to get. </param>
+        /// <param name="offsetCoords">Offset coordinates of the node to get. </param>
         /// <returns></returns>
-        public IEnumerable<PointF> GetHexPolyAt(Point cartesianCoords)
+        public HexagonCell GetNode(Point offsetCoords)
         {
-            throw new NotImplementedException();
-            //TODO: Get hex from grid. 
+            HexagonCell oCell = null;
+            this.dictCellOffset.TryGetValue(offsetCoords, out oCell);
+            return oCell;
         }
 
         /// <summary>
-        /// Returns the Manhatten distance between the given points. 
+        /// Returns a node at the given cartesian coordinates. 
+        /// </summary>
+        /// <param name="cartesianCoords"></param>
+        /// <remarks>
+        /// An unexpected node may be returned, due to potential rounding errors. 
+        /// </remarks>
+        /// <returns></returns>
+        public HexagonCell GetNodeAt(PointF cartesianCoords)
+        {
+            csPoint3 cubeCoords = this.GetCartesianToCube(cartesianCoords);
+
+            return this.GetNode(cubeCoords);
+        }
+
+        #endregion GetNode
+
+        /// <summary>
+        /// Returns the Manhatten distance between the given cube coordinate points. 
         /// </summary>
         /// <param name="pntA"></param>
         /// <param name="pntB"></param>
@@ -368,17 +427,7 @@ namespace Graph.Grid
         {
             return (Math.Abs(pntA.X - pntB.X) + Math.Abs(pntA.Y - pntB.Y) + Math.Abs(pntA.Z - pntB.Z)) / 2;
         }
-
-        /// <summary>
-        /// Returns the cell at the given cartesian coordiantes. 
-        /// </summary>
-        /// <param name="pnt"></param>
-        /// <returns></returns>
-        public HexCell GetAtCartesian(PointF pnt)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         #region OffsetPoly
 
         /// <summary>
@@ -423,82 +472,127 @@ namespace Graph.Grid
             return polyOffset;
         }
 
+        /// <summary>
+        /// Returns a polygon, based on the given polygon, offset by the given amount. 
+        /// </summary>
+        /// <param name="poly"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        public static IEnumerable<PointD> OffsetPoly(IEnumerable<PointD> poly, PointD offset)
+        {
+            PointD[] polyOffset = new PointD[poly.Count()];
+
+            for (int i = 0; i < poly.Count(); i++)
+            {
+                polyOffset[i] = new PointD(
+                    poly.ElementAt(i).X + offset.X,
+                    poly.ElementAt(i).Y + offset.Y
+                );
+            }
+
+            return polyOffset;
+        }
+
         #endregion OffsetPoly
 
         #region Conversions
 
-        public Point GetCubeToAxial(csPoint3 h)
+        #region Axial
+
+        /// <summary>
+        /// Returns axial coordinates for the given cube coordinates. 
+        /// </summary>
+        /// <param name="cubeCoords"></param>
+        /// <returns></returns>
+        public Point GetCubeToAxial(csPoint3 cubeCoords)
         {
-            // q -> column
-            // r -> row
-            var q = h.X;
-            var r = h.Z;
+            var q = cubeCoords.X; // q -> column -> x
+            var r = cubeCoords.Z; // r -> row -> z
+
             return new Point(q, r);
-
         }
 
-        public csPoint3 GetGetAxialToCube(Point h)
+        /// <summary>
+        /// Returns cube coordinates for the given axial coordinates. 
+        /// </summary>
+        /// <param name="axialCoords"></param>
+        /// <returns></returns>
+        public csPoint3 GetAxialToCube(Point axialCoords)
         {
-            var x = h.X; // h.X -> q -> column
-            var z = h.Y; // h.Y -> r -> row
+            // 0 = x + y + z
+            // -y = x + z
+            // y = -x - z
+
+            var x = axialCoords.X; // x -> q -> column
+            var z = axialCoords.Y; // y -> r -> row
+            var y = -x - z;
+
+            return new csPoint3(x, y, z);
+        }
+
+        #endregion Axial
+
+        #region Offset
+
+        /// <summary>
+        /// Converts from cube coordinates to offset even-q (even column) coordinates. 
+        /// Use with flat-topped hexes. 
+        /// </summary>
+        /// <param name="cubeCoords"></param>
+        /// <returns></returns>
+        public Point GetCubeToQEven(csPoint3 cubeCoords)
+        {
+            var q = cubeCoords.X;
+            var r = cubeCoords.Z + (cubeCoords.X + (cubeCoords.X & 1)) / 2;
+
+            return new Point(q, r);
+        }
+
+        /// <summary>
+        /// Converts from offset even-q (even column) coordinates to cube coordinates. 
+        /// Use with flat-topped hexes. 
+        /// </summary>
+        /// <param name="offsetCoords"></param>
+        /// <returns></returns>
+        public csPoint3 GetQEvenToCube(Point offsetCoords)
+        {
+            var x = offsetCoords.X;
+            var z = offsetCoords.Y - (offsetCoords.X + (offsetCoords.X & 1)) / 2;
             var y = -x - z;
 
             return new csPoint3(x, y, z);
         }
 
         /// <summary>
-        /// Converts from cube to cartesian even-q. 
-        /// Use with flat-topped hexes. 
+        /// Converts from cube coordinates to offset even-r (even row) coordinates. 
+        /// Use with pointy-topped hexes. 
         /// </summary>
-        /// <param name="h"></param>
+        /// <param name="cubeCoords"></param>
         /// <returns></returns>
-        public Point GetCubeToQEven(csPoint3 h)
+        public Point GetCubeToREven(csPoint3 cubeCoords)
         {
-            var col = h.X;
-            var row = h.Z + (h.X + (h.X & 1)) / 2;
+            var col = cubeCoords.X + (cubeCoords.Z + (cubeCoords.Z & 1)) / 2;
+            var row = cubeCoords.Z;
             return new Point(col, row);
         }
 
         /// <summary>
-        /// Converts from cartesian even-q to cube. 
-        /// Use with flat-topped hexes. 
+        /// Converts from offset even-r (even row) coordinates to cube coordinates. 
+        /// Use with pointy-topped hexes. 
         /// </summary>
-        /// <param name="h"></param>
+        /// <param name="offsetCoords"></param>
         /// <returns></returns>
-        public csPoint3 GetQEvenToCube(Point h)
+        public csPoint3 GetREvenToCube(Point offsetCoords)
         {
-            var x = h.X;
-            var z = h.Y - (h.X + (h.X & 1)) / 2;
+            var x = offsetCoords.X - (offsetCoords.Y + (offsetCoords.Y & 1)) / 2;
+            var z = offsetCoords.Y;
             var y = -x - z;
             return new csPoint3(x, y, z);
         }
 
-        /// <summary>
-        /// Converts from cube to cartesian even-r. 
-        /// Use with pointy-topped hexes. 
-        /// </summary>
-        /// <param name="h"></param>
-        /// <returns></returns>
-        public Point GetCubeToREven(csPoint3 h)
-        {
-            var col = h.X + (h.Z + (h.Z & 1)) / 2;
-            var row = h.Z;
-            return new Point(col, row);
-        }
+        #endregion Offset
 
-        /// <summary>
-        /// Converts from cartesian even-r to cube. 
-        /// Use with pointy-topped hexes. 
-        /// </summary>
-        /// <param name="h"></param>
-        /// <returns></returns>
-        public csPoint3 GetREvenToCube(Point h)
-        {
-            var x = h.X - (h.Y + (h.Y & 1)) / 2;
-            var z = h.Y;
-            var y = -x - z;
-            return new csPoint3(x, y, z);
-        }
+        #region Cartesian
 
         // ######## Formulas ########
         //y = (3/2) * s * b
@@ -514,46 +608,65 @@ namespace Graph.Grid
         /// <summary>
         /// Returns cartesian coordiantes for the given cube coordinates. 
         /// </summary>
-        /// <param name="pntCube">Cube coordinates. </param>
+        /// <param name="cubeCoords">Cube coordinates. </param>
         /// <returns></returns>
         /// <see cref="http://stackoverflow.com/questions/2459402/hexagonal-grid-coordinates-to-pixel-coordinates"/>
-        public PointF GetCartesian(csPoint3 pntCube)
+        public PointF GetCubeToCartesian(csPoint3 cubeCoords)
         {
-            // TODO: Calculation for flat-topped hexagons. 
-            // Calculation for pointy-topped hexagons. 
-            double r = pntCube.X;
-            double g = pntCube.Y;
-            double b = pntCube.Z;
+            if (this.pointyTop)
+            {
+                // Calculation for pointy-topped hexagons. 
+                double r = cubeCoords.X;
+                double g = cubeCoords.Y;
+                double b = cubeCoords.Z;
 
-            double x = 1.7320508075688772D * this.sizeHex * (b / 2 + r);
-            double y = 1.5D * this.sizeHex * b;
+                double x = 1.7320508075688772D * this.sizeHex * (b / 2 + r);
+                double y = 1.5D * this.sizeHex * b;
 
-            return new PointF((float)x, (float)y);
+                return new PointF((float)x, (float)y);
+            }
+            else
+            {
+                // TODO: Calculation for flat-topped hexagons. 
+                throw new NotImplementedException();
+            }
         }
 
         /// <summary>
         /// Returns cube coordinates for the given cartesian coordiantes. 
         /// </summary>
-        /// <param name="pntCart"></param>
+        /// <param name="cartesianCoords"></param>
         /// <returns></returns>
         /// <see cref="http://stackoverflow.com/questions/2459402/hexagonal-grid-coordinates-to-pixel-coordinates"/>
-        public csPoint3 GetCube(PointF pntCart)
+        public csPoint3 GetCartesianToCube(PointF cartesianCoords)
         {
-            // TODO: Calculation for flat-topped hexagons. 
-            // Calculation for pointy-topped hexagons. 
-            double x = pntCart.X;
-            double y = pntCart.Y;
+            if (this.pointyTop)
+            {
+                // Calculation for pointy-topped hexagons. 
+                double x = cartesianCoords.X;
+                double y = cartesianCoords.Y;
 
-            double r = (0.57735026918962573D * x - y / 3) / this.sizeHex;
-            double g = -(0.57735026918962573D * x + y / 3) / this.sizeHex;
-            double b = 0.66666666666666663D * y / this.sizeHex;
+                double r = (0.57735026918962573D * x - y / 3) / this.sizeHex;
+                double g = -(0.57735026918962573D * x + y / 3) / this.sizeHex;
+                double b = 0.66666666666666663D * y / this.sizeHex;
 
-            return new csPoint3((int)Math.Round(r), (int)Math.Round(g), (int)Math.Round(b));
+                return new csPoint3((int)Math.Round(r), (int)Math.Round(g), (int)Math.Round(b));
 
-            //csPoint3F pntResult = new csPoint3F((float)Math.Round(r), (float)Math.Round(g), (float)Math.Round(b));
+                // TODO: Check if rounding needed. 
+                //csPoint3F pntResult = new csPoint3F((float)Math.Round(r), (float)Math.Round(g), (float)Math.Round(b));
 
-            //return this.GetCubeRounded(pntResult);
+                //return this.GetCubeRounded(pntResult);
+            }
+            else
+            {
+                // TODO: Calculation for flat-topped hexagons. 
+                throw new NotImplementedException();
+            }
         }
+
+        #endregion Cartesian
+
+        #region Rounding
 
         /// <summary>
         /// Returns the rounded, given Cube coordinates. 
@@ -583,6 +696,8 @@ namespace Graph.Grid
             return new csPoint3((int)rx, (int)ry, (int)rz);
         }
 
+        #endregion Rounding
+
         #endregion Conversions
 
         #endregion Methods
@@ -598,7 +713,7 @@ namespace Graph.Grid
     /// Represents a cell of a hexagon grid map. 
     /// </summary>
     [DebuggerDisplay("\\{ X = {X} Y = {Y} Z = {Z} cost = {cost} impassable = {impassable} \\}")]
-    public class HexCell
+    public class HexagonCell
     {
         /*****************************************************************/
         // Declarations
@@ -640,15 +755,29 @@ namespace Graph.Grid
         /*****************************************************************/
         #region Constructors
 
-        public HexCell(int x, int y, int z)
+        public HexagonCell(int x, int y, int z)
         {
             this.X = x;
             this.Y = y;
             this.Z = z;
         }
 
-        public HexCell(int x, int y, int z, int cost, bool impassable)
+        public HexagonCell(csPoint3 cubeCoords)
+        {
+            this.X = cubeCoords.X;
+            this.Y = cubeCoords.Y;
+            this.Z = cubeCoords.Z;
+        }
+
+        public HexagonCell(int x, int y, int z, int cost, bool impassable)
             : this(x, y, z)
+        {
+            this.cost = cost;
+            this.impassable = impassable;
+        }
+
+        public HexagonCell(csPoint3 cubeCoords, int cost, bool impassable)
+            : this(cubeCoords)
         {
             this.cost = cost;
             this.impassable = impassable;

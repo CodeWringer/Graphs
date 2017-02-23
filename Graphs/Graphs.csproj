@@ -30,8 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="csMaths">
-      <HintPath>..\..\csMaths\csMaths\bin\x86\Debug\csMaths.dll</HintPath>
+    <Reference Include="csMaths, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CSharp-Math\csMaths\bin\x86\Debug\csMaths.dll</HintPath>
     </Reference>
     <Reference Include="Priority Queue">
       <HintPath>..\..\External\High-Speed-Priority-Queue-for-C-Sharp\Priority Queue\bin\Debug\Priority Queue.dll</HintPath>

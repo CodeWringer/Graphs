@@ -11,6 +11,14 @@ This library is still heavily work in progress and as such is entirely subject t
 * Hexagonal grids
 * Polygonal (arbitrary) graphs
 * Additional A* variants
+    * Beam search
+    * Iterative deepening
+    * Dynamic weighting
+    * Bandwidth search
+    * Bidirectional search
+    * Dynamic A* and Lifelong Planning A*
+    * Jump Point Search
+    * Theta*
 * Easy to use path finding for non-class bound (int[,]) grids
 
 ---------------------------------------
@@ -101,6 +109,9 @@ Using A*
     // Without diagonal traversal. 
     IEnumerable<SquareCell> path = AStar.GetPath(pntStart, pntGoal, grid, -1.0F);
 ```
+
+After you got your path, you can iterate over the IEnumerable returned to you. The first element in the IEnumerable will be the first node of the path. 
+For example, if you have an AI agent that is supposed to traverse the path, you cache the path (perhaps on the agent object itself) and set the agent's current position to the next node in the path. Then remove that node from the path and repeat until there are no more nodes in the path. 
 
 ---------------------------------------
 ## Credit
