@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 
 using Graph.Grid;
+using Tools.Maths.Point3;
 
 namespace Graph.Pathing
 {
@@ -225,18 +226,17 @@ namespace Graph.Pathing
         /// <summary>
         /// Returns a path constructed from the given parameters. 
         /// </summary>
-        /// <param name="nodeCurrent"></param>
         /// <param name="pntStart"></param>
         /// <param name="pntGoal"></param>
         /// <param name="cameFrom"></param>
         /// <returns></returns>
-        internal static IEnumerable<Point> ConstructPath(Point nodeCurrent, Point pntStart, Point pntGoal, Point?[,] cameFrom)
+        internal static IEnumerable<Point> ConstructPath(Point?[,] cameFrom, Point pntStart, Point pntGoal)
         {
             if (cameFrom[pntGoal.X, pntGoal.Y] == null) // Could not find path. 
                 return null;
 
             List<Point> lPath = new List<Point>();
-            nodeCurrent = pntGoal;
+            Point nodeCurrent = pntGoal;
             lPath.Add(nodeCurrent);
             while (nodeCurrent != pntStart)
             {
@@ -252,19 +252,43 @@ namespace Graph.Pathing
         /// <summary>
         /// Returns a path constructed from the given parameters. 
         /// </summary>
-        /// <param name="node"></param>
         /// <param name="pntStart"></param>
         /// <param name="pntGoal"></param>
-        /// <param name="oGrid"></param>
         /// <param name="cameFrom"></param>
         /// <returns></returns>
-        internal static IEnumerable<SquareCell> ConstructPath(SquareCell node, Point pntStart, Point pntGoal, SquareCell[,] cameFrom)
+        internal static IEnumerable<SquareCell> ConstructPath(SquareCell[,] cameFrom, Point pntStart, Point pntGoal)
         {
             if (cameFrom[pntGoal.X, pntGoal.Y] == null) // Could not find path. 
                 return null;
 
             List<SquareCell> lPath = new List<SquareCell>();
-            node = cameFrom[pntGoal.X, pntGoal.Y];
+            SquareCell node = cameFrom[pntGoal.X, pntGoal.Y];
+            lPath.Add(node);
+            while (node != cameFrom[pntStart.X, pntStart.Y])
+            {
+                node = cameFrom[node.X, node.Y];
+                lPath.Add(node);
+            }
+            lPath.Add(cameFrom[pntStart.X, pntStart.Y]);
+            lPath.Reverse();
+
+            return lPath;
+        }
+
+        /// <summary>
+        /// Returns a path constructed from the given parameters. 
+        /// </summary>
+        /// <param name="pntStart"></param>
+        /// <param name="pntGoal"></param>
+        /// <param name="cameFrom"></param>
+        /// <returns></returns>
+        internal static IEnumerable<HexagonCell> ConstructPath(HexagonCell[,] cameFrom, csPoint3 pntStart, csPoint3 pntGoal)
+        {
+            if (cameFrom[pntGoal.X, pntGoal.Y] == null) // Could not find path. 
+                return null;
+
+            List<HexagonCell> lPath = new List<HexagonCell>();
+            HexagonCell node = cameFrom[pntGoal.X, pntGoal.Y];
             lPath.Add(node);
             while (node != cameFrom[pntStart.X, pntStart.Y])
             {
@@ -281,24 +305,24 @@ namespace Graph.Pathing
         /// Returns a path constructed from the given grid, at the given end location. 
         /// The path leads to the starting location that can be found via the grid traversal. 
         /// </summary>
-        /// <param name="paths">A grid of 'came from' locations. </param>
+        /// <param name="cameFrom">A grid of 'came from' locations. </param>
         /// <param name="pntStart">A starting location. </param>
         /// <returns></returns>
-        public static IEnumerable<SquareCell> ConstructPath(SquareCell[,] paths, Point pntGoal)
+        public static IEnumerable<SquareCell> ConstructPath(SquareCell[,] cameFrom, Point pntGoal)
         {
             List<SquareCell> lPath = new List<SquareCell>();
 
             // Construct path. 
             lPath.Add(new SquareCell(pntGoal.X, pntGoal.Y));
-            SquareCell current = paths[pntGoal.X, pntGoal.Y];
+            SquareCell current = cameFrom[pntGoal.X, pntGoal.Y];
             lPath.Add(current);
 
             if (current == null)
                 return lPath;
 
-            while (paths[current.X, current.Y] != null)
+            while (cameFrom[current.X, current.Y] != null)
             {
-                current = paths[current.X, current.Y];
+                current = cameFrom[current.X, current.Y];
                 lPath.Add(current);
             }
             lPath.Reverse();
@@ -310,24 +334,24 @@ namespace Graph.Pathing
         /// Returns a path constructed from the given grid, at the given end location. 
         /// The path leads to the starting location that can be found via the grid traversal. 
         /// </summary>
-        /// <param name="paths">A grid of 'came from' locations. </param>
+        /// <param name="cameFrom">A grid of 'came from' locations. </param>
         /// <param name="pntStart">A starting location. </param>
         /// <returns></returns>
-        public static IEnumerable<Point> ConstructPath(Point?[,] paths, Point pntGoal)
+        public static IEnumerable<Point> ConstructPath(Point?[,] cameFrom, Point pntGoal)
         {
             List<Point> lPath = new List<Point>();
 
             // Construct path. 
             lPath.Add(pntGoal);
-            Point current = paths[pntGoal.X, pntGoal.Y].Value;
+            Point current = cameFrom[pntGoal.X, pntGoal.Y].Value;
             lPath.Add(current);
 
             if (current == null)
                 return lPath;
 
-            while (paths[current.X, current.Y] != null)
+            while (cameFrom[current.X, current.Y] != null)
             {
-                current = paths[current.X, current.Y].Value;
+                current = cameFrom[current.X, current.Y].Value;
                 lPath.Add(current);
             }
             lPath.Reverse();

@@ -68,7 +68,17 @@ namespace Graph.Grid
         /// The size of a hexagon's side. 
         /// </summary>
         public int sizeHex { get; private set; }
-        
+
+        /// <summary>
+        /// Width of the grid, in tiles. 
+        /// </summary>
+        public int Width { get; private set; }
+
+        /// <summary>
+        /// Height of the grid, in tiles. 
+        /// </summary>
+        public int Height { get; private set; }
+
         /// <summary>
         /// A hexagon at location 0,0,0
         /// </summary>
@@ -123,6 +133,19 @@ namespace Graph.Grid
         /// Step size along each axis. 
         /// </summary>
         private float sizeStep;
+
+        /// <summary>
+        /// Cube coordinate directions for retrieving neighbors of a given cube coordinate. 
+        /// </summary>
+        public static readonly csPoint3[] Directions = new csPoint3[]
+        {
+            new csPoint3(-1, 0, 1),
+            new csPoint3(-1, 1, 0),
+            new csPoint3(0, -1, 1),
+            new csPoint3(1, -1, 0),
+            new csPoint3(1, 0, -1),
+            new csPoint3(0, 1, -1),
+        };
 
         #endregion Declarations
         /*****************************************************************/
@@ -203,6 +226,9 @@ namespace Graph.Grid
         /// <param name="height"></param>
         private void CreateGrid(int width, int height)
         {
+            this.Width = width;
+            this.Height = height;
+
             // Fill grid with cells. 
             for (int q = 0; q < width; q++)
             {
@@ -427,7 +453,60 @@ namespace Graph.Grid
         {
             return (Math.Abs(pntA.X - pntB.X) + Math.Abs(pntA.Y - pntB.Y) + Math.Abs(pntA.Z - pntB.Z)) / 2;
         }
-        
+
+        /// <summary>
+        /// Returns a list of all neighbors of the given vertex. 
+        /// </summary>
+        /// <param name="cubeCoords"></param>
+        /// <returns></returns>
+        public IEnumerable<HexagonCell> GetNeighbors(csPoint3 cubeCoords)
+        {
+            List<HexagonCell> lCell = new List<HexagonCell>();
+
+            for (int dir = 0; dir < Directions.Length; dir++)
+            {
+                csPoint3 cubeCoordsAt = new csPoint3(
+                    cubeCoords.X + Directions[dir].X,
+                    cubeCoords.Y + Directions[dir].Y,
+                    cubeCoords.Z + Directions[dir].Z
+                );
+
+                if (this.IsOutOfBounds(Directions[dir]))
+                {
+                    continue;
+                }
+                lCell.Add(this.GetNode(cubeCoordsAt));
+            }
+
+            return lCell;
+        }
+
+        /// <summary>
+        /// Returns true, if the given cube coordinates are out of bounds. 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        public bool IsOutOfBounds(int x, int y, int z)
+        {
+            if (!this.dictCellCube.ContainsKey(new csPoint3(x, y, z)))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true, if the given cube coordinates are out of bounds. 
+        /// </summary>
+        /// <param name="cubeCoords"></param>
+        /// <returns></returns>
+        public bool IsOutOfBounds(csPoint3 cubeCoords)
+        {
+            return this.IsOutOfBounds(cubeCoords.X, cubeCoords.Y, cubeCoords.Z);
+        }
+
         #region OffsetPoly
 
         /// <summary>

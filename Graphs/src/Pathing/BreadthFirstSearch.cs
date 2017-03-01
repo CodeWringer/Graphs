@@ -73,7 +73,7 @@ namespace Graph.Pathing
                 }
             }
 
-            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
+            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
         }
 
         /// <summary>
@@ -128,12 +128,12 @@ namespace Graph.Pathing
         /// Returns a path constructed from the given grid, at the given end location. 
         /// The path leads to the starting location that can be found via the grid traversal. 
         /// </summary>
-        /// <param name="paths">A grid of 'came from' locations. </param>
+        /// <param name="cameFrom">A grid of 'came from' locations. </param>
         /// <param name="pntStart">A starting location. </param>
         /// <returns></returns>
-        public static IEnumerable<Point> GetPath(Point?[,] paths, Point pntGoal)
+        public static IEnumerable<Point> GetPath(Point?[,] cameFrom, Point pntGoal)
         {
-            return Utility.ConstructPath(paths, pntGoal);
+            return Utility.ConstructPath(cameFrom, pntGoal);
         }
 
         #endregion SimpleGrid
@@ -153,7 +153,7 @@ namespace Graph.Pathing
             List<SquareCell> lPath = new List<SquareCell>();
             SquareCell[,] cameFrom = new SquareCell[oGrid.Width, oGrid.Height];
 
-            frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y));
+            frontier.Enqueue(oGrid.GetNode(pntStart.X, pntStart.Y));
             cameFrom[pntStart.X, pntStart.Y] = null;
             SquareCell nodeCurrent = null;
 
@@ -162,7 +162,7 @@ namespace Graph.Pathing
             {
                 nodeCurrent = frontier.Dequeue();
 
-                if (nodeCurrent == oGrid.GetAt(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
+                if (nodeCurrent == oGrid.GetNode(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
                     break;
 
                 IEnumerable<SquareCell> neighbors = oGrid.GetNeighbors(nodeCurrent.Location, true);
@@ -171,7 +171,7 @@ namespace Graph.Pathing
                 {
                     SquareCell nodeNext = neighbors.ElementAt(next);
 
-                    if (oGrid.GetAt(nodeNext.X, nodeNext.Y).impassable) // Looking at impassable tile. 
+                    if (nodeNext.impassable) // Looking at impassable tile. 
                         continue;
 
                     if (cameFrom[nodeNext.X, nodeNext.Y] == null)
@@ -182,7 +182,7 @@ namespace Graph.Pathing
                 }
             }
 
-            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
+            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
         }
 
         /// <summary>
@@ -197,7 +197,7 @@ namespace Graph.Pathing
             List<SquareCell> lPath = new List<SquareCell>();
             SquareCell[,] cameFrom = new SquareCell[oGrid.Width, oGrid.Height];
 
-            frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y));
+            frontier.Enqueue(oGrid.GetNode(pntStart.X, pntStart.Y));
             cameFrom[pntStart.X, pntStart.Y] = null;
             SquareCell current;
 
@@ -212,10 +212,10 @@ namespace Graph.Pathing
                 {
                     SquareCell pntNext = neighbors.ElementAt(next);
 
-                    if (pntNext == oGrid.GetAt(pntStart.X, pntStart.Y)) // Ignore starting tile while looking for neighbors. 
+                    if (pntNext == oGrid.GetNode(pntStart.X, pntStart.Y)) // Ignore starting tile while looking for neighbors. 
                         continue;
 
-                    if (oGrid.GetAt(pntNext.X, pntNext.Y).impassable) // Looking at impassable tile. 
+                    if (pntNext.impassable) // Looking at impassable tile. 
                         continue;
 
                     if (cameFrom[pntNext.X, pntNext.Y] == null)
@@ -233,19 +233,62 @@ namespace Graph.Pathing
         /// Returns a path constructed from the given grid, at the given end location. 
         /// The path leads to the starting location that can be found via the grid traversal. 
         /// </summary>
-        /// <param name="paths">A grid of 'came from' locations. </param>
+        /// <param name="cameFrom">A grid of 'came from' locations. </param>
         /// <param name="pntStart">A starting location. </param>
         /// <returns></returns>
-        public static IEnumerable<SquareCell> GetPath(SquareCell[,] paths, Point pntGoal)
+        public static IEnumerable<SquareCell> GetPath(SquareCell[,] cameFrom, Point pntGoal)
         {
-            return Utility.ConstructPath(paths, pntGoal);
+            return Utility.ConstructPath(cameFrom, pntGoal);
         }
 
         #endregion SquareGrid
 
         #region HexGrid
 
+        /// <summary>
+        /// Finds a path on the given grid and returns the path, beginning with the given start node. 
+        /// </summary>
+        /// <param name="pntStart">A node to begin the search at. </param>
+        /// <param name="pntGoal">A node to end the search at. </param>
+        /// <param name="oGrid">The grid do to the search with. </param>
+        /// <returns></returns>
+        public static IEnumerable<HexagonCell> GetPath(csPoint3 pntStart, csPoint3 pntGoal, HexagonGrid oGrid)
+        {
+            Queue<HexagonCell> frontier = new Queue<HexagonCell>();
+            List<HexagonCell> lPath = new List<HexagonCell>();
+            HexagonCell[,] cameFrom = new HexagonCell[oGrid.Width, oGrid.Height];
 
+            frontier.Enqueue(oGrid.GetNode(pntStart));
+            cameFrom[pntStart.X, pntStart.Y] = null;
+            HexagonCell nodeCurrent = null;
+
+            // Traverse map. 
+            while (frontier.Count() != 0)
+            {
+                nodeCurrent = frontier.Dequeue();
+
+                if (nodeCurrent == oGrid.GetNode(pntGoal)) // Reached goal destination. 
+                    break;
+
+                IEnumerable<HexagonCell> neighbors = oGrid.GetNeighbors(nodeCurrent.Location);
+
+                for (int next = 0; next < neighbors.Count(); next++)
+                {
+                    HexagonCell nodeNext = neighbors.ElementAt(next);
+
+                    if (nodeNext.impassable) // Looking at impassable tile. 
+                        continue;
+
+                    if (cameFrom[nodeNext.X, nodeNext.Y] == null)
+                    {
+                        frontier.Enqueue(nodeNext);
+                        cameFrom[nodeNext.X, nodeNext.Y] = nodeCurrent;
+                    }
+                }
+            }
+
+            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
+        }
 
         #endregion HexGrid
 

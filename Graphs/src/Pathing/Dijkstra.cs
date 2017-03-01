@@ -83,7 +83,7 @@ namespace Graph.Pathing
                 }
             }
 
-            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
+            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
         }
 
         /// <summary>
@@ -145,12 +145,12 @@ namespace Graph.Pathing
         /// Returns a path constructed from the given grid, at the given end location. 
         /// The path leads to the starting location that can be found via the grid traversal. 
         /// </summary>
-        /// <param name="paths">A grid of 'came from' locations. </param>
+        /// <param name="cameFrom">A grid of 'came from' locations. </param>
         /// <param name="pntStart">A starting location. </param>
         /// <returns></returns>
-        public static IEnumerable<Point> GetPath(Point?[,] paths, Point pntGoal)
+        public static IEnumerable<Point> GetPath(Point?[,] cameFrom, Point pntGoal)
         {
-            return Utility.ConstructPath(paths, pntGoal);
+            return Utility.ConstructPath(cameFrom, pntGoal);
         }
         
         #endregion SimpleGrid
@@ -174,7 +174,7 @@ namespace Graph.Pathing
             float?[,] costSoFar = new float?[oGrid.Width, oGrid.Height];
             costSoFar[pntStart.X, pntStart.Y] = 0;
 
-            frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y), 0);
+            frontier.Enqueue(oGrid.GetNode(pntStart.X, pntStart.Y), 0);
             cameFrom[pntStart.X, pntStart.Y] = null;
             SquareCell nodeCurrent = null;
 
@@ -183,7 +183,7 @@ namespace Graph.Pathing
             {
                 nodeCurrent = frontier.Dequeue();
 
-                if (nodeCurrent == oGrid.GetAt(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
+                if (nodeCurrent == oGrid.GetNode(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
                     break;
 
                 IEnumerable<SquareCell> neighbors = oGrid.GetNeighbors(nodeCurrent.Location, true);
@@ -192,7 +192,7 @@ namespace Graph.Pathing
                 {
                     SquareCell pntNext = neighbors.ElementAt(next);
 
-                    if (oGrid.GetAt(pntNext.X, pntNext.Y).impassable) // Looking at impassable tile. 
+                    if (pntNext.impassable) // Looking at impassable tile. 
                         continue;
 
                     float newCost = costSoFar[nodeCurrent.X, nodeCurrent.Y].Value + Utility.GetCost(nodeCurrent, pntNext);
@@ -207,7 +207,7 @@ namespace Graph.Pathing
                 }
             }
 
-            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
+            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
         }
 
         /// <summary>
@@ -227,7 +227,7 @@ namespace Graph.Pathing
             float?[,] costSoFar = new float?[oGrid.Width, oGrid.Height];
             costSoFar[pntStart.X, pntStart.Y] = 0;
 
-            frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y), 0);
+            frontier.Enqueue(oGrid.GetNode(pntStart.X, pntStart.Y), 0);
             cameFrom[pntStart.X, pntStart.Y] = null;
             SquareCell current;
 
@@ -242,10 +242,10 @@ namespace Graph.Pathing
                 {
                     SquareCell pntNext = neighbors.ElementAt(next);
 
-                    if (pntNext == oGrid.GetAt(pntStart.X, pntStart.Y)) // Ignore starting tile while looking for neighbors. 
+                    if (pntNext == oGrid.GetNode(pntStart.X, pntStart.Y)) // Ignore starting tile while looking for neighbors. 
                         continue;
 
-                    if (oGrid.GetAt(pntNext.X, pntNext.Y).impassable) // Looking at impassable tile. 
+                    if (pntNext.impassable) // Looking at impassable tile. 
                         continue;
 
                     float newCost = costSoFar[current.X, current.Y].Value + Utility.GetCost(current, pntNext);
@@ -267,12 +267,12 @@ namespace Graph.Pathing
         /// Returns a path constructed from the given grid, at the given end location. 
         /// The path leads to the starting location that can be found via the grid traversal. 
         /// </summary>
-        /// <param name="paths">A grid of 'came from' locations. </param>
+        /// <param name="cameFrom">A grid of 'came from' locations. </param>
         /// <param name="pntStart">A starting location. </param>
         /// <returns></returns>
-        public static IEnumerable<SquareCell> GetPath(SquareCell[,] paths, Point pntGoal)
+        public static IEnumerable<SquareCell> GetPath(SquareCell[,] cameFrom, Point pntGoal)
         {
-            return Utility.ConstructPath(paths, pntGoal);
+            return Utility.ConstructPath(cameFrom, pntGoal);
         }
         
         #endregion SquareGrid

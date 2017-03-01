@@ -98,7 +98,7 @@ namespace Graph.Pathing
                 }
             }
 
-            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
+            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
         }
         
         #endregion SimpleGrid
@@ -123,7 +123,7 @@ namespace Graph.Pathing
 
             bool allowDiagonal = costDiagonal > 0 ? true : false;
 
-            frontier.Enqueue(oGrid.GetAt(pntStart.X, pntStart.Y), 0);
+            frontier.Enqueue(oGrid.GetNode(pntStart.X, pntStart.Y), 0);
             cameFrom[pntStart.X, pntStart.Y] = null;
             SquareCell nodeCurrent = null;
 
@@ -132,7 +132,7 @@ namespace Graph.Pathing
             {
                 nodeCurrent = frontier.Dequeue();
 
-                if (nodeCurrent == oGrid.GetAt(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
+                if (nodeCurrent == oGrid.GetNode(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
                     break;
 
                 IEnumerable<SquareCell> neighbors = null;
@@ -146,7 +146,7 @@ namespace Graph.Pathing
                 {
                     SquareCell nodeNext = neighbors.ElementAt(next);
 
-                    if (oGrid.GetAt(nodeNext.X, nodeNext.Y).impassable) // Looking at impassable tile. 
+                    if (oGrid.GetNode(nodeNext.X, nodeNext.Y).impassable) // Looking at impassable tile. 
                         continue;
 
                     // Get cost. 
@@ -175,7 +175,7 @@ namespace Graph.Pathing
                 }
             }
 
-            return Utility.ConstructPath(nodeCurrent, pntStart, pntGoal, cameFrom);
+            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
         }
         
         #endregion SquareGrid

@@ -2,7 +2,7 @@
 A set of implementations of graphs, grids and traversal (path finding) algorithms, in C#. 
 
 ---------------------------------------
-## What can this library be used for?
+## What does this do?
 This library is intended to provide path finding algorithms and graphs to use them with in a cohesive and straight-forward way. 
 
 ---------------------------------------

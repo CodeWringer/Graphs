@@ -178,12 +178,12 @@ namespace Graph.Grid
         /// </summary>
         /// <param name="pnt"></param>
         /// <returns></returns>
-        public SquareCell GetAtCartesian(PointF pnt)
+        public SquareCell GetNodeAt(PointF pnt)
         {
             float x = pnt.X / this.sizeTile.Width;
             float y = pnt.Y / this.sizeTile.Height;
 
-            return this.GetAt(new Point((int)Math.Round(x), (int)Math.Round(y)));
+            return this.GetNode(new Point((int)Math.Round(x), (int)Math.Round(y)));
         }
 
         /// <summary>
@@ -191,9 +191,9 @@ namespace Graph.Grid
         /// </summary>
         /// <param name="pnt"></param>
         /// <returns></returns>
-        public SquareCell GetAtCartesian(float x, float y)
+        public SquareCell GetNodeAt(float x, float y)
         {
-            return this.GetAtCartesian(new PointF(x, y));
+            return this.GetNodeAt(new PointF(x, y));
         }
 
         /// <summary>
@@ -201,7 +201,7 @@ namespace Graph.Grid
         /// </summary>
         /// <param name="pnt"></param>
         /// <returns></returns>
-        public SquareCell GetAt(Point pnt)
+        public SquareCell GetNode(Point pnt)
         {
             if (IsOutOfBounds(pnt))
                 return null;
@@ -215,9 +215,9 @@ namespace Graph.Grid
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        public SquareCell GetAt(int x, int y)
+        public SquareCell GetNode(int x, int y)
         {
-            return this.GetAt(new Point(x, y));
+            return this.GetNode(new Point(x, y));
         }
 
         /// <summary>
