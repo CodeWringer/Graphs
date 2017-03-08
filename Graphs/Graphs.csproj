@@ -30,9 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="csMaths, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CSharp-Math\csMaths\bin\x86\Debug\csMaths.dll</HintPath>
+    <Reference Include="CSharpMaths">
+      <HintPath>..\..\CSharp-Math\csMaths\bin\x86\Debug\CSharpMaths.dll</HintPath>
     </Reference>
     <Reference Include="Priority Queue">
       <HintPath>..\..\External\High-Speed-Priority-Queue-for-C-Sharp\Priority Queue\bin\Debug\Priority Queue.dll</HintPath>
@@ -50,13 +49,13 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\HexagonGrid\HexagonGrid.cs" />
-    <Compile Include="src\IGraph2.cs" />
+    <Compile Include="src\IGraph.cs" />
     <Compile Include="src\Pathing\AStar.cs" />
     <Compile Include="src\Pathing\BreadthFirstSearch.cs" />
     <Compile Include="src\Pathing\Dijkstra.cs" />
-    <Compile Include="src\Pathing\Utility.cs" />
+    <Compile Include="src\Pathing\GraphUtility.cs" />
     <Compile Include="src\SquareGrid\SquareGrid.cs" />
-    <Compile Include="src\Graph.cs" />
+    <Compile Include="src\Vertex.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\PolygonGrid\" />

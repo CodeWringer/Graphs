@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-
-using Tools.Maths.Point3;
-using Graph.Grid;
 
 namespace Graph.Pathing
 {
@@ -15,288 +11,101 @@ namespace Graph.Pathing
     public abstract class BreadthFirstSearch
     {
         /*****************************************************************/
-        // Declarations
-        /*****************************************************************/
-        #region Declarations
-
-        #endregion Declarations
-        /*****************************************************************/
         // Methods
         /*****************************************************************/
         #region Methods
 
-        #region SimpleGrid
-
         /// <summary>
-        /// Finds a path on the given grid and returns the path, beginning with the given start node. 
+        /// Finds a path on the given grid and returns the path, beginning with the given start cell. 
         /// </summary>
-        /// <remarks>
-        /// Does an early exit. 
-        /// </remarks>
-        /// <param name="pntStart">A node to begin the search at. </param>
-        /// <param name="pntGoal">A node to end the search at. </param>
+        /// <typeparam name="T">The "Vertex" class or a class inheriting from the "Vertex" class. </typeparam>
+        /// <param name="start">A vertex to begin the search at. </param>
+        /// <param name="goal">A vertex to end the search at. </param>
         /// <param name="grid">The grid to search on. </param>
-        /// <param name="tileImpassable">The number associated with impassable tiles. </param>
         /// <returns></returns>
-        public static IEnumerable<Point> GetPath(Point pntStart, Point pntGoal, int[,] grid, int tileImpassable)
+        public static IEnumerable<T> GetPath<T>(T start, T goal, IGraph<T> grid) where T : Vertex
         {
-            Queue<Point> frontier = new Queue<Point>();
-            List<Point> lPath = new List<Point>();
-            Point?[,] cameFrom = new Point?[grid.GetLength(0), grid.GetLength(1)];
+            Dictionary<T, T> cameFrom = BreadthFirstSearch.GetPath<T>(start, goal, grid, true);
 
-            frontier.Enqueue(pntStart);
-            cameFrom[pntStart.X, pntStart.Y] = null;
-            Point nodeCurrent = new Point();
-
-            // Traverse map. 
-            while (frontier.Count() != 0)
-            {
-                nodeCurrent = frontier.Dequeue();
-
-                if (nodeCurrent == pntGoal) // Reached goal destination. 
-                    break;
-
-                IEnumerable<Point> neighbors = Utility.GetNeighbors(nodeCurrent, grid, true);
-
-                for (int next = 0; next < neighbors.Count(); next++)
-                {
-                    Point pntNext = neighbors.ElementAt(next);
-
-                    if (grid[pntNext.X, pntNext.Y] == tileImpassable) // Looking at impassable tile. 
-                        continue;
-
-                    if (cameFrom[pntNext.X, pntNext.Y] == null)
-                    {
-                        frontier.Enqueue(pntNext);
-                        cameFrom[pntNext.X, pntNext.Y] = nodeCurrent;
-                    }
-                }
-            }
-
-            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
+            return GraphUtility.ConstructPath(cameFrom, goal);
         }
 
         /// <summary>
-        /// Returns a grid representing all steps required to get to the given starting point, from any location. 
+        /// Returns a path based on the given "came from" vertices and a given goal vertex. 
         /// </summary>
-        /// <remarks>
-        /// Does not do an early exit. 
-        /// </remarks>
-        /// <param name="pntStart">A node to begin the search at. </param>
+        /// <typeparam name="T">The "Vertex" class or a class inheriting from the "Vertex" class. </typeparam>
+        /// <param name="cameFrom"></param>
+        /// <param name="goal"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> GetPath<T>(Dictionary<T, T> cameFrom, T goal) where T : Vertex
+        {
+            return GraphUtility.ConstructPath(cameFrom, goal);
+        }
+
+        /// <summary>
+        /// Finds all paths on the given grid that lead to the given vertex and returns the paths. 
+        /// </summary>
+        /// <typeparam name="T">The "Vertex" class or a class inheriting from the "Vertex" class. </typeparam>
+        /// <param name="goal">The vertex that all paths should lead to. </param>
         /// <param name="grid">The grid to search on. </param>
-        /// <param name="tileImpassable">The number associated with impassable tiles. </param>
         /// <returns></returns>
-        public static Point?[,] GetPath(Point pntStart, int[,] grid, int tileImpassable)
+        public static Dictionary<T, T> GetPaths<T>(T goal, IGraph<T> grid) where T : Vertex
         {
-            Queue<Point> frontier = new Queue<Point>();
-            List<Point> lPath = new List<Point>();
-            Point?[,] cameFrom = new Point?[grid.GetLength(0), grid.GetLength(1)];
-
-            frontier.Enqueue(pntStart);
-            cameFrom[pntStart.X, pntStart.Y] = null;
-            Point current;
-
-            // Traverse map. 
-            while (frontier.Count() != 0)
-            {
-                current = frontier.Dequeue();
-                
-                IEnumerable<Point> neighbors = Utility.GetNeighbors(current, grid, true);
-
-                for (int next = 0; next < neighbors.Count(); next++)
-                {
-                    Point pntNext = neighbors.ElementAt(next);
-
-                    if (pntNext == pntStart) // Ignore starting tile while looking for neighbors. 
-                        continue;
-
-                    if (grid[pntNext.X, pntNext.Y] == tileImpassable) // Looking at impassable tile. 
-                        continue;
-
-                    if (cameFrom[pntNext.X, pntNext.Y] == null)
-                    {
-                        frontier.Enqueue(pntNext);
-                        cameFrom[pntNext.X, pntNext.Y] = current;
-                    }
-                }
-            }
-            
-            return cameFrom;
+            return BreadthFirstSearch.GetPath<T>(goal, null, grid, true);
         }
 
         /// <summary>
-        /// Returns a path constructed from the given grid, at the given end location. 
-        /// The path leads to the starting location that can be found via the grid traversal. 
+        /// Finds a path on the given grid and returns the path, beginning with the given start cell. 
         /// </summary>
-        /// <param name="cameFrom">A grid of 'came from' locations. </param>
-        /// <param name="pntStart">A starting location. </param>
+        /// <typeparam name="T">The "Vertex" class or a class inheriting from the "Vertex" class. </typeparam>
+        /// <param name="start">A vertex to begin the search at. </param>
+        /// <param name="goal">A vertex to end the search at. Will be ignored, if null. </param>
+        /// <param name="grid">The grid to search on. </param>
+        /// <param name="breakEarly">If true, will stop searching after reaching the goal. </param>
         /// <returns></returns>
-        public static IEnumerable<Point> GetPath(Point?[,] cameFrom, Point pntGoal)
+        internal static Dictionary<T, T> GetPath<T>(T start, T goal, IGraph<T> grid, bool breakEarly) where T : Vertex
         {
-            return Utility.ConstructPath(cameFrom, pntGoal);
-        }
+            if (start == null)
+                throw new ArgumentNullException("start", "The given start vertex must not be null!");
 
-        #endregion SimpleGrid
+            if (grid == null)
+                throw new ArgumentNullException("grid", "The given grid must not be null!");
 
-        #region SquareGrid
+            Queue<T> frontier = new Queue<T>();
+            List<T> lPath = new List<T>();
+            Dictionary<T, T> cameFrom = new Dictionary<T, T>();
 
-        /// <summary>
-        /// Finds a path on the given grid and returns the path, beginning with the given start node. 
-        /// </summary>
-        /// <param name="pntStart">A node to begin the search at. </param>
-        /// <param name="pntGoal">A node to end the search at. </param>
-        /// <param name="oGrid">The grid do to the search with. </param>
-        /// <returns></returns>
-        public static IEnumerable<SquareCell> GetPath(Point pntStart, Point pntGoal, SquareGrid oGrid)
-        {
-            Queue<SquareCell> frontier = new Queue<SquareCell>();
-            List<SquareCell> lPath = new List<SquareCell>();
-            SquareCell[,] cameFrom = new SquareCell[oGrid.Width, oGrid.Height];
-
-            frontier.Enqueue(oGrid.GetNode(pntStart.X, pntStart.Y));
-            cameFrom[pntStart.X, pntStart.Y] = null;
-            SquareCell nodeCurrent = null;
-
-            // Traverse map. 
-            while (frontier.Count() != 0)
-            {
-                nodeCurrent = frontier.Dequeue();
-
-                if (nodeCurrent == oGrid.GetNode(pntGoal.X, pntGoal.Y)) // Reached goal destination. 
-                    break;
-
-                IEnumerable<SquareCell> neighbors = oGrid.GetNeighbors(nodeCurrent.Location, true);
-
-                for (int next = 0; next < neighbors.Count(); next++)
-                {
-                    SquareCell nodeNext = neighbors.ElementAt(next);
-
-                    if (nodeNext.impassable) // Looking at impassable tile. 
-                        continue;
-
-                    if (cameFrom[nodeNext.X, nodeNext.Y] == null)
-                    {
-                        frontier.Enqueue(nodeNext);
-                        cameFrom[nodeNext.X, nodeNext.Y] = nodeCurrent;
-                    }
-                }
-            }
-
-            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
-        }
-
-        /// <summary>
-        /// Returns a grid representing all steps required to get to the given starting point, from any location. 
-        /// </summary>
-        /// <param name="pntStart">A node to begin the search at. </param>
-        /// <param name="oGrid">The grid do to the search with. </param>
-        /// <returns></returns>
-        public static SquareCell[,] GetPath(Point pntStart, SquareGrid oGrid)
-        {
-            Queue<SquareCell> frontier = new Queue<SquareCell>();
-            List<SquareCell> lPath = new List<SquareCell>();
-            SquareCell[,] cameFrom = new SquareCell[oGrid.Width, oGrid.Height];
-
-            frontier.Enqueue(oGrid.GetNode(pntStart.X, pntStart.Y));
-            cameFrom[pntStart.X, pntStart.Y] = null;
-            SquareCell current;
+            frontier.Enqueue(start);
+            cameFrom.Add(start, null);
+            T current = null;
 
             // Traverse map. 
             while (frontier.Count() != 0)
             {
                 current = frontier.Dequeue();
 
-                IEnumerable<SquareCell> neighbors = oGrid.GetNeighbors(current.Location, true);
+                if (goal != null && current == goal && breakEarly) // Reached goal destination. 
+                    break;
+
+                IEnumerable<T> neighbors = grid.GetNeighbors(current);
 
                 for (int next = 0; next < neighbors.Count(); next++)
                 {
-                    SquareCell pntNext = neighbors.ElementAt(next);
+                    T neighborNext = neighbors.ElementAt(next);
 
-                    if (pntNext == oGrid.GetNode(pntStart.X, pntStart.Y)) // Ignore starting tile while looking for neighbors. 
+                    if (neighborNext.impassable) // Looking at impassable tile. 
                         continue;
 
-                    if (pntNext.impassable) // Looking at impassable tile. 
-                        continue;
-
-                    if (cameFrom[pntNext.X, pntNext.Y] == null)
+                    if (!cameFrom.ContainsKey(neighborNext)) // vertex not yet looked at. 
                     {
-                        frontier.Enqueue(pntNext);
-                        cameFrom[pntNext.X, pntNext.Y] = current;
+                        frontier.Enqueue(neighborNext);
+                        cameFrom.Add(neighborNext, current); // Add trace back for the neighbor to the current cell. 
                     }
                 }
             }
 
             return cameFrom;
         }
-
-        /// <summary>
-        /// Returns a path constructed from the given grid, at the given end location. 
-        /// The path leads to the starting location that can be found via the grid traversal. 
-        /// </summary>
-        /// <param name="cameFrom">A grid of 'came from' locations. </param>
-        /// <param name="pntStart">A starting location. </param>
-        /// <returns></returns>
-        public static IEnumerable<SquareCell> GetPath(SquareCell[,] cameFrom, Point pntGoal)
-        {
-            return Utility.ConstructPath(cameFrom, pntGoal);
-        }
-
-        #endregion SquareGrid
-
-        #region HexGrid
-
-        /// <summary>
-        /// Finds a path on the given grid and returns the path, beginning with the given start node. 
-        /// </summary>
-        /// <param name="pntStart">A node to begin the search at. </param>
-        /// <param name="pntGoal">A node to end the search at. </param>
-        /// <param name="oGrid">The grid do to the search with. </param>
-        /// <returns></returns>
-        public static IEnumerable<HexagonCell> GetPath(csPoint3 pntStart, csPoint3 pntGoal, HexagonGrid oGrid)
-        {
-            Queue<HexagonCell> frontier = new Queue<HexagonCell>();
-            List<HexagonCell> lPath = new List<HexagonCell>();
-            HexagonCell[,] cameFrom = new HexagonCell[oGrid.Width, oGrid.Height];
-
-            frontier.Enqueue(oGrid.GetNode(pntStart));
-            cameFrom[pntStart.X, pntStart.Y] = null;
-            HexagonCell nodeCurrent = null;
-
-            // Traverse map. 
-            while (frontier.Count() != 0)
-            {
-                nodeCurrent = frontier.Dequeue();
-
-                if (nodeCurrent == oGrid.GetNode(pntGoal)) // Reached goal destination. 
-                    break;
-
-                IEnumerable<HexagonCell> neighbors = oGrid.GetNeighbors(nodeCurrent.Location);
-
-                for (int next = 0; next < neighbors.Count(); next++)
-                {
-                    HexagonCell nodeNext = neighbors.ElementAt(next);
-
-                    if (nodeNext.impassable) // Looking at impassable tile. 
-                        continue;
-
-                    if (cameFrom[nodeNext.X, nodeNext.Y] == null)
-                    {
-                        frontier.Enqueue(nodeNext);
-                        cameFrom[nodeNext.X, nodeNext.Y] = nodeCurrent;
-                    }
-                }
-            }
-
-            return Utility.ConstructPath(cameFrom, pntStart, pntGoal);
-        }
-
-        #endregion HexGrid
-
-        #region PolygonGrid
-
-
-
-        #endregion PolygonGrid
 
         #endregion Methods
     }

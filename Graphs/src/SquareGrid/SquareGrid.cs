@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 
 namespace Graph.Grid
 {
@@ -12,6 +13,7 @@ namespace Graph.Grid
     /// <remarks>
     /// TODO:
     /// - Pathfinding. 
+    ///     - Allow / Disallow edge cutting. 
     /// 
     /// - Field of view. 
     /// - Range. 
@@ -20,7 +22,7 @@ namespace Graph.Grid
     /// - Rounding. 
     /// - Wraparound. 
     /// </remarks>
-    public class SquareGrid
+    public class SquareGrid : IGraph<SquareCell>
     {
         /*****************************************************************/
         // Declarations
@@ -54,6 +56,11 @@ namespace Graph.Grid
             get { return this.grid.GetLength(1); }
             private set { }
         }
+
+        /// <summary>
+        /// If true, allows diagonal searching on this grid. 
+        /// </summary>
+        public bool allowDiagonal;
 
         public static readonly Point East = new Point(1, 0);
         public static readonly Point South = new Point(0, 1);
@@ -136,9 +143,8 @@ namespace Graph.Grid
         /// Returns a list of all neighbors of the given vertex. 
         /// </summary>
         /// <param name="vertex"></param>
-        /// <param name="allowDiagonal"></param>
         /// <returns></returns>
-        public IEnumerable<SquareCell> GetNeighbors(Point vertex, bool allowDiagonal)
+        public IEnumerable<SquareCell> GetNeighbors(Point vertex)
         {
             List<SquareCell> neighbors = new List<SquareCell>();
 
@@ -156,7 +162,7 @@ namespace Graph.Grid
                 }
             }
 
-            if (allowDiagonal)
+            if (this.allowDiagonal)
             {
                 for (int i = 0; i < DirectionsDiag.Length; i++)
                 {
@@ -174,16 +180,30 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// Returns a cell at the given cartesian coordinates. 
+        /// Returns a list of all neighbors of the given vertex. 
         /// </summary>
-        /// <param name="pnt"></param>
+        /// <param name="vertex"></param>
         /// <returns></returns>
-        public SquareCell GetNodeAt(PointF pnt)
+        public IEnumerable<SquareCell> GetNeighbors(SquareCell vertex)
         {
-            float x = pnt.X / this.sizeTile.Width;
-            float y = pnt.Y / this.sizeTile.Height;
+            return this.GetNeighbors(vertex.Location);
+        }
 
-            return this.GetNode(new Point((int)Math.Round(x), (int)Math.Round(y)));
+        /// <summary>
+        /// Returns true, if the given verices are neighbors. 
+        /// </summary>
+        /// <param name="vertexA"></param>
+        /// <param name="vertexB"></param>
+        /// <returns></returns>
+        public bool IsAdjacent(SquareCell vertexA, SquareCell vertexB)
+        {
+            // TODO: Check if optimization possible. 
+            IEnumerable<SquareCell> neighbors = this.GetNeighbors(vertexA);
+
+            if (neighbors.Contains(vertexB))
+                return true;
+            else
+                return false;
         }
 
         /// <summary>
@@ -191,9 +211,22 @@ namespace Graph.Grid
         /// </summary>
         /// <param name="pnt"></param>
         /// <returns></returns>
-        public SquareCell GetNodeAt(float x, float y)
+        public SquareCell GetCellAt(PointF pnt)
         {
-            return this.GetNodeAt(new PointF(x, y));
+            float x = pnt.X / this.sizeTile.Width;
+            float y = pnt.Y / this.sizeTile.Height;
+
+            return this.GetCell(new Point((int)Math.Round(x), (int)Math.Round(y)));
+        }
+
+        /// <summary>
+        /// Returns a cell at the given cartesian coordinates. 
+        /// </summary>
+        /// <param name="pnt"></param>
+        /// <returns></returns>
+        public SquareCell GetCellAt(float x, float y)
+        {
+            return this.GetCellAt(new PointF(x, y));
         }
 
         /// <summary>
@@ -201,7 +234,7 @@ namespace Graph.Grid
         /// </summary>
         /// <param name="pnt"></param>
         /// <returns></returns>
-        public SquareCell GetNode(Point pnt)
+        public SquareCell GetCell(Point pnt)
         {
             if (IsOutOfBounds(pnt))
                 return null;
@@ -215,9 +248,9 @@ namespace Graph.Grid
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        public SquareCell GetNode(int x, int y)
+        public SquareCell GetCell(int x, int y)
         {
-            return this.GetNode(new Point(x, y));
+            return this.GetCell(new Point(x, y));
         }
 
         /// <summary>
@@ -284,10 +317,10 @@ namespace Graph.Grid
     }
 
     /// <summary>
-    /// Represents a cell of a rectangular grid map. 
+    /// Represents a square shaped graph vertex. 
     /// </summary>
     [DebuggerDisplay("\\{ X = {X} Y = {Y} cost = {cost} impassable = {impassable} \\}")]
-    public class SquareCell
+    public class SquareCell : Vertex
     {
         /*****************************************************************/
         // Declarations
@@ -295,21 +328,9 @@ namespace Graph.Grid
         #region Declarations
 
         /// <summary>
-        /// X coordinate of this cell. 
+        /// Z coordinate of this cell. 
         /// </summary>
-        public int X { get; private set; }
-        /// <summary>
-        /// Y coordinate of this cell. 
-        /// </summary>
-        public int Y { get; private set; }
-        /// <summary>
-        /// Pathing cost of this cell. 
-        /// </summary>
-        public float cost;
-        /// <summary>
-        /// If true, renders this tile as impassable to path finding. 
-        /// </summary>
-        public bool impassable;
+        private new int Z;
         /// <summary>
         /// The coordinate location of this cell. 
         /// </summary>
@@ -326,24 +347,15 @@ namespace Graph.Grid
         #region Constructors
 
         public SquareCell(int x, int y)
+            : base(x, y, -1, 1, false)
         {
-            this.X = x;
-            this.Y = y;
         }
 
         public SquareCell(int x, int y, float cost, bool impassable)
-            : this(x, y)
+            : base(x, y, -1, cost, impassable)
         {
-            this.cost = cost;
-            this.impassable = impassable;
         }
 
         #endregion Constructors
-        /*****************************************************************/
-        // Methods
-        /*****************************************************************/
-        #region Methods
-
-        #endregion Methods
     }
 }
