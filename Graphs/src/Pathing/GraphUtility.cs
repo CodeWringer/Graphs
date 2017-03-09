@@ -17,104 +17,54 @@ namespace Graph.Pathing
         // Methods
         /*****************************************************************/
         #region Methods
-
-        #region GetCost
-
-        /// <summary>
-        /// Returns the cost difference between the given vertices. 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="vertexA"></param>
-        /// <param name="vertexB"></param>
-        /// <param name="costDiagonal"></param>
-        /// <returns></returns>
-        internal static float GetCost<T>(T vertexA, T vertexB, float costDiagonal = 1.0F) where T : Vertex
-        {
-            // TODO: Figure out if diagonal cost can be removed. 
-            float cost = Math.Max(vertexA.cost - vertexB.cost, 1.0F);
-
-            return costDiagonal > 0 ? (cost * costDiagonal) : cost;
-        }
-
-        #endregion GetCost
-
+            
         #region GetHeuristic
 
-        /// <summary>
-        /// Returns the Manhattan distance. 
-        /// </summary>
-        /// <param name="goal">A point representing the goal position. </param>
-        /// <param name="point">A point to get the heuristic for. </param>
-        /// <param name="D">The minimum cost between any adjacent cells. </param>
-        /// <returns></returns>
-        internal static float GetHeuristicManhattan(Point goal, Point point, float D)
-        {
-            float dx = Math.Abs(point.X - goal.X);
-            float dy = Math.Abs(point.Y - goal.Y);
-            return D * (dx + dy);
-        }
+        ///// <summary>
+        ///// Returns the Manhattan distance. 
+        ///// </summary>
+        ///// <param name="goal">A point representing the goal position. </param>
+        ///// <param name="point">A point to get the heuristic for. </param>
+        ///// <param name="D">The minimum cost between any adjacent cells. </param>
+        ///// <returns></returns>
+        //internal static float GetHeuristicManhattan(Point goal, Point point, float D)
+        //{
+        //    float dx = Math.Abs(point.X - goal.X);
+        //    float dy = Math.Abs(point.Y - goal.Y);
+        //    return D * (dx + dy);
+        //}
 
-        /// <summary>
-        /// Returns the diagonal distance. 
-        /// </summary>
-        /// <param name="goal">A point representing the goal position. </param>
-        /// <param name="point">A point to get the heuristic for. </param>
-        /// <param name="D">The minimum cost between any adjacent cells. </param>
-        /// <param name="D2">The cost of moving diagonally. </param>
-        /// <returns></returns>
-        internal static float GetHeuristicDiagonal(Point goal, Point point, float D, float D2)
-        {
-            float dx = Math.Abs(point.X - goal.X);
-            float dy = Math.Abs(point.Y - goal.Y);
-            return D * (dx + dy) + (D2 - 2 * D) * Math.Min(dx, dy);
-        }
+        ///// <summary>
+        ///// Returns the diagonal distance. 
+        ///// </summary>
+        ///// <param name="goal">A point representing the goal position. </param>
+        ///// <param name="point">A point to get the heuristic for. </param>
+        ///// <param name="D">The minimum cost between any adjacent cells. </param>
+        ///// <param name="D2">The cost of moving diagonally. </param>
+        ///// <returns></returns>
+        //internal static float GetHeuristicDiagonal(Point goal, Point point, float D, float D2)
+        //{
+        //    float dx = Math.Abs(point.X - goal.X);
+        //    float dy = Math.Abs(point.Y - goal.Y);
+        //    return D * (dx + dy) + (D2 - 2 * D) * Math.Min(dx, dy);
+        //}
 
-        /// <summary>
-        /// Returns the Euclidean distance. 
-        /// </summary>
-        /// <param name="goal"></param>
-        /// <param name="point"></param>
-        /// <param name="D"></param>
-        /// <returns></returns>
-        internal static float GetHeuristicEuclidean(Point goal, Point point, float D)
-        {
-            float dx = Math.Abs(point.X - goal.X);
-            float dy = Math.Abs(point.Y - goal.Y);
-            return D * (float)Math.Sqrt(dx * dx + dy * dy);
-        }
+        ///// <summary>
+        ///// Returns the Euclidean distance. 
+        ///// </summary>
+        ///// <param name="goal"></param>
+        ///// <param name="point"></param>
+        ///// <param name="D"></param>
+        ///// <returns></returns>
+        //internal static float GetHeuristicEuclidean(Point goal, Point point, float D)
+        //{
+        //    float dx = Math.Abs(point.X - goal.X);
+        //    float dy = Math.Abs(point.Y - goal.Y);
+        //    return D * (float)Math.Sqrt(dx * dx + dy * dy);
+        //}
 
         #endregion GetHeuristic
-
-        #region GetLowestCost
-
-        /// <summary>
-        /// Returns the lowest cost of all the neighboring cells of the given cell. 
-        /// </summary>
-        /// <param name="vertex"></param>
-        /// <param name="grid"></param>
-        /// <param name="costDiagonal"></param>
-        /// <returns></returns>
-        internal static float GetLowestCost<T>(T vertex, IGraph<T> grid, float costDiagonal) where T : Vertex
-        {
-            IEnumerable<T> neighbors = grid.GetNeighbors(vertex);
-            float costLowest = float.MaxValue;
-
-            // TODO: Clean up. 
-            //if (costDiagonal <= 0)
-            //    neighbors = oGrid.GetNeighbors(cell.Location, false);
-            //else
-            //    neighbors = oGrid.GetNeighbors(cell.Location, true);
-
-            foreach (T neighbor in neighbors)
-            {
-                if (neighbor.cost < costLowest)
-                    costLowest = neighbor.cost;
-            }
-            return costLowest;
-        }
-
-        #endregion GetLowestCost
-
+        
         #region ConstructPath
 
         /// <summary>

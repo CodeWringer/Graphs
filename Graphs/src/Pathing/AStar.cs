@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 
-using Graph.Grid;
 using Priority_Queue;
 
 namespace Graph.Pathing
@@ -59,7 +57,7 @@ namespace Graph.Pathing
                     // Get cost. 
                     float newCost = 0.0F;
                     costSoFar.TryGetValue(current, out newCost);
-                    newCost += GraphUtility.GetCost(current, neighbor, costDiagonal);
+                    newCost += grid.GetCost(current, neighbor);
 
                     if (!costSoFar.ContainsKey(neighbor) || newCost < costSoFar[neighbor])
                     {
@@ -68,24 +66,14 @@ namespace Graph.Pathing
                         else
                             costSoFar.Add(neighbor, newCost);
 
-                        float priority = 0;
-                        float D = GraphUtility.GetLowestCost(neighbor, grid, costDiagonal);
-
-                        Point pntGoal = new Point(goal.X, goal.Y);
-                        Point pntNeighbor = new Point(neighbor.X, neighbor.Y);
-
-                        if (costDiagonal > 0)
-                        {
-                            float D2 = GraphUtility.GetCost(current, neighbor, costDiagonal);
-                            priority = newCost + GraphUtility.GetHeuristicDiagonal(pntGoal, pntNeighbor, D, D2);
-                        }
-                        else
-                        {
-                            priority = newCost + GraphUtility.GetHeuristicManhattan(pntGoal, pntNeighbor, D);
-                        }
+                        float priority = newCost + grid.GetHeuristic(goal, neighbor);
 
                         frontier.Enqueue(neighbor, priority);
-                        cameFrom.Add(neighbor, current); // TODO: Key can be added twice?
+
+                        if (!cameFrom.ContainsKey(neighbor))
+                            cameFrom.Add(neighbor, current);
+                        else
+                            cameFrom[neighbor] = current;
                     }
                 }
             }

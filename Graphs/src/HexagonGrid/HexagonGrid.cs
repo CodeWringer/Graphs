@@ -17,22 +17,22 @@ namespace Graph.Grid
         // TODO: Descriptions
         /// <summary>
         /// 
-        /// Hexagons are be flat-topped. 
+        /// Hexagons are flat-topped. 
         /// </summary>
         ColumnEven,
         /// <summary>
         /// 
-        /// Hexagons are be flat-topped. 
+        /// Hexagons are flat-topped. 
         /// </summary>
         ColumnOdd,
         /// <summary>
         /// 
-        /// Hexagons are be pointy-topped. 
+        /// Hexagons are pointy-topped. 
         /// </summary>
         RowEven,
         /// <summary>
         /// 
-        /// Hexagons are be pointy-topped. 
+        /// Hexagons are pointy-topped. 
         /// </summary>
         RowOdd
     }
@@ -49,10 +49,7 @@ namespace Graph.Grid
     ///     - Offset coordinates
     ///     - Cartesian coordinates
     /// - Populate a grid with hexagons. 
-    /// - Iterate entire grid. 
-    /// - Getting hexagon neighbor(s). 
     /// - Getting hexagon at cartesian coordinates. 
-    /// - Getting hexagon at cube coordinates. 
     /// - Line drawing. 
     /// - Pathfinding. 
     /// 
@@ -886,6 +883,67 @@ namespace Graph.Grid
         #endregion Rounding
 
         #endregion Conversions
+
+        /// <summary>
+        /// Returns the cost difference between the given cells. 
+        /// </summary>
+        /// <param name="vertexA"></param>
+        /// <param name="vertexB"></param>
+        /// <returns></returns>
+        public float GetCost(HexagonCell vertexA, HexagonCell vertexB)
+        {
+            float cost = Math.Max(vertexA.cost - vertexB.cost, 1.0F);
+
+            return cost;
+        }
+
+        /// <summary>
+        /// Returns the lowest cost of all the neighboring cells of the given cell. 
+        /// </summary>
+        /// <param name="vertex"></param>
+        /// <returns></returns>
+        public float GetCostLowest(HexagonCell vertex)
+        {
+            IEnumerable<HexagonCell> neighbors = this.GetNeighbors(vertex);
+            float costLowest = float.MaxValue;
+
+            foreach (HexagonCell neighbor in neighbors)
+            {
+                if (neighbor.cost < costLowest)
+                    costLowest = neighbor.cost;
+            }
+            return costLowest;
+        }
+
+        /// <summary>
+        /// Returns the distance between the given cells. 
+        /// </summary>
+        /// <param name="vertexA"></param>
+        /// <param name="vertexB"></param>
+        /// <returns></returns>
+        public float GetDistance(HexagonCell vertexA, HexagonCell vertexB)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Returns the heuristic value between the given cells. 
+        /// </summary>
+        /// <param name="vertexA"></param>
+        /// <param name="vertexB"></param>
+        /// <param name=""></param>
+        /// <returns></returns>
+        public float GetHeuristic(HexagonCell vertexA, HexagonCell vertexB)
+        {
+            float D = this.GetCostLowest(vertexB);
+            float dx = Math.Abs(vertexB.X - vertexA.X);
+            float dy = Math.Abs(vertexB.Y - vertexA.Y);
+            return D * (float)Math.Sqrt(dx * dx + dy * dy);
+
+            // TODO: Consider changing to this? Paths are more direct, but with a "zig-zag" pattern. 
+            //float dz = Math.Abs(vertexB.Z - vertexA.Z);
+            //return D * (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
 
         #endregion Methods
         /*****************************************************************/

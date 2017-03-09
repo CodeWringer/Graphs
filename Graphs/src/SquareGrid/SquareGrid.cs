@@ -62,6 +62,16 @@ namespace Graph.Grid
         /// </summary>
         public bool allowDiagonal;
 
+        /// <summary>
+        /// If true, allows path searching to cut corners. 
+        /// </summary>
+        public bool allowEdgeCutting;
+
+        /// <summary>
+        /// The cost of diagonal searching on this grid. 
+        /// </summary>
+        public float costDiagonal;
+
         public static readonly Point East = new Point(1, 0);
         public static readonly Point South = new Point(0, 1);
         public static readonly Point West = new Point(-1, 0);
@@ -87,12 +97,20 @@ namespace Graph.Grid
         /*****************************************************************/
         #region Constructors
 
-        public SquareGrid(int width, int height, Size sizeTile)
+        /// <summary>
+        /// Creates a new grid with the given width and height
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="sizeTile"></param>
+        /// <param name="costDiagonal"></param>
+        public SquareGrid(int width, int height, Size sizeTile, float costDiagonal = 1.4F)
         {
             if (width <= 0 || height <= 0)
                 throw new ArgumentException("The given width and height for the grid must not be <= 0!");
 
             this.sizeTile = sizeTile;
+            this.costDiagonal = costDiagonal;
 
             // Create new grid. 
             this.grid = new SquareCell[width, height];
@@ -311,6 +329,74 @@ namespace Graph.Grid
                 }
             }
             return lPoints;
+        }
+
+        /// <summary>
+        /// Returns the cost difference between the given cells. 
+        /// </summary>
+        /// <param name="vertexA"></param>
+        /// <param name="vertexB"></param>
+        /// <returns></returns>
+        public float GetCost(SquareCell vertexA, SquareCell vertexB)
+        {
+            float cost = Math.Max(vertexA.cost - vertexB.cost, 1.0F);
+
+            return this.costDiagonal > 0 ? (cost * this.costDiagonal) : cost;
+        }
+
+        /// <summary>
+        /// Returns the lowest cost of all the neighboring cells of the given cell. 
+        /// </summary>
+        /// <param name="vertex"></param>
+        /// <returns></returns>
+        public float GetCostLowest(SquareCell vertex)
+        {
+            IEnumerable<SquareCell> neighbors = this.GetNeighbors(vertex);
+            float costLowest = float.MaxValue;
+
+            foreach (SquareCell neighbor in neighbors)
+            {
+                if (neighbor.cost < costLowest)
+                    costLowest = neighbor.cost;
+            }
+            return costLowest;
+        }
+
+        /// <summary>
+        /// Returns the distance between the given cells. 
+        /// </summary>
+        /// <param name="vertexA"></param>
+        /// <param name="vertexB"></param>
+        /// <returns></returns>
+        public float GetDistance(SquareCell vertexA, SquareCell vertexB)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Returns the heuristic value between the given cells. 
+        /// </summary>
+        /// <param name="vertexA"></param>
+        /// <param name="vertexB"></param>
+        /// <param name=""></param>
+        /// <returns></returns>
+        public float GetHeuristic(SquareCell vertexA, SquareCell vertexB)
+        {
+            float D = this.GetCostLowest(vertexB);
+
+            if (this.costDiagonal > 0)
+            {
+                float D2 = this.GetCost(vertexA, vertexB);
+                float dx = Math.Abs(vertexB.X - vertexA.X);
+                float dy = Math.Abs(vertexB.Y - vertexA.Y);
+                return D * (dx + dy) + (D2 - 2 * D) * Math.Min(dx, dy);
+            } 
+            else
+            {
+                float dx = Math.Abs(vertexB.X - vertexA.X);
+                float dy = Math.Abs(vertexB.Y - vertexA.Y);
+                return D * (dx + dy);
+            }
         }
 
         #endregion Methods

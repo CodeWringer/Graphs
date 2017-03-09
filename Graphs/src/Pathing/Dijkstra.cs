@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 
 using Priority_Queue;
-
-using Graph.Grid;
 
 namespace Graph.Pathing
 {
@@ -100,7 +97,7 @@ namespace Graph.Pathing
 
                     float newCost = 0.0F;
                     costSoFar.TryGetValue(current, out newCost);
-                    newCost += GraphUtility.GetCost(current, neighborNext);
+                    newCost += grid.GetCost(current, neighborNext);
 
                     if (!costSoFar.ContainsKey(neighborNext) || newCost < costSoFar[neighborNext])
                     {
