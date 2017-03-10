@@ -10,34 +10,6 @@ using System.Diagnostics;
 namespace Graph.Grid
 {
     /// <summary>
-    /// An enum of possible hexagon grid types. 
-    /// </summary>
-    public enum HexagonGridTypes
-    {
-        // TODO: Descriptions
-        /// <summary>
-        /// 
-        /// Hexagons are flat-topped. 
-        /// </summary>
-        ColumnEven,
-        /// <summary>
-        /// 
-        /// Hexagons are flat-topped. 
-        /// </summary>
-        ColumnOdd,
-        /// <summary>
-        /// 
-        /// Hexagons are pointy-topped. 
-        /// </summary>
-        RowEven,
-        /// <summary>
-        /// 
-        /// Hexagons are pointy-topped. 
-        /// </summary>
-        RowOdd
-    }
-
-    /// <summary>
     /// Represents a hexagonal grid. 
     /// </summary>
     /// <remarks>
@@ -51,7 +23,6 @@ namespace Graph.Grid
     /// - Populate a grid with hexagons. 
     /// - Getting hexagon at cartesian coordinates. 
     /// - Line drawing. 
-    /// - Pathfinding. 
     /// 
     /// - Field of view. 
     /// - Range. 
@@ -84,14 +55,15 @@ namespace Graph.Grid
         public List<HexagonCell> lCell { get; private set; }
 
         /// <summary>
-        /// Determines the type of hexagon grid. 
+        /// Determines the orientation of the hexagons. If true, the pointy side will point upwards/north. 
         /// </summary>
-        public HexagonGridTypes GridType { get; private set; }
+        public bool PointyTop { get; private set; }
 
         /// <summary>
-        /// Determines the orientation of the hexagons. If true, the pointy side will point upwards. 
+        /// Determines whether the first row/column begins inset or outset. This affects the "zig-zag" pattern of the grid. 
+        /// If pointy top is true, rows are affected. If pointy top is false, columns are affected. 
         /// </summary>
-        private bool PointyTop { get; set; }
+        public bool Odd { get; private set; }
 
         /// <summary>
         /// The size of a hexagon's side. 
@@ -108,55 +80,55 @@ namespace Graph.Grid
         /// </summary>
         public int Height { get; private set; }
 
-        /// <summary>
-        /// A hexagon at location 0,0,0
-        /// </summary>
-        private IEnumerable<PointF> hexPolyOrigin;
+        ///// <summary>
+        ///// A hexagon at location 0,0,0
+        ///// </summary>
+        //private IEnumerable<PointF> hexPolyOrigin;
 
-        /// <summary>
-        /// Acts as the grid's cube R-axis. Can also be seen as X-axis. 
-        /// </summary>
-        private Vector2D vectR;
+        ///// <summary>
+        ///// Acts as the grid's cube R-axis. Can also be seen as X-axis. 
+        ///// </summary>
+        //private Vector2D vectR;
 
-        /// <summary>
-        /// Acts as the grid's cube G-axis. Can also be seen as Y-axis. 
-        /// </summary>
-        private Vector2D vectG;
+        ///// <summary>
+        ///// Acts as the grid's cube G-axis. Can also be seen as Y-axis. 
+        ///// </summary>
+        //private Vector2D vectG;
 
-        /// <summary>
-        /// Acts as the grid's cube B-axis. Can also be seen as Z-axis. 
-        /// </summary>
-        private Vector2D vectB;
+        ///// <summary>
+        ///// Acts as the grid's cube B-axis. Can also be seen as Z-axis. 
+        ///// </summary>
+        //private Vector2D vectB;
 
-        /// <summary>
-        /// Normalized (unit length) R-axis vector. 
-        /// </summary>
-        private Vector2D vectNormR;
+        ///// <summary>
+        ///// Normalized (unit length) R-axis vector. 
+        ///// </summary>
+        //private Vector2D vectNormR;
 
-        /// <summary>
-        /// Normalized (unit length) G-axis vector. 
-        /// </summary>
-        private Vector2D vectNormG;
+        ///// <summary>
+        ///// Normalized (unit length) G-axis vector. 
+        ///// </summary>
+        //private Vector2D vectNormG;
 
-        /// <summary>
-        /// Normalized (unit length) B-axis vector. 
-        /// </summary>
-        private Vector2D vectNormB;
+        ///// <summary>
+        ///// Normalized (unit length) B-axis vector. 
+        ///// </summary>
+        //private Vector2D vectNormB;
 
-        /// <summary>
-        /// A vector perpendicular to the R-axis. 
-        /// </summary>
-        private Vector2D vectPerpR;
+        ///// <summary>
+        ///// A vector perpendicular to the R-axis. 
+        ///// </summary>
+        //private Vector2D vectPerpR;
 
-        /// <summary>
-        /// A vector perpendicular to the G-axis. 
-        /// </summary>
-        private Vector2D vectPerpG;
+        ///// <summary>
+        ///// A vector perpendicular to the G-axis. 
+        ///// </summary>
+        //private Vector2D vectPerpG;
 
-        /// <summary>
-        /// A vector perpendicular to the B-axis. 
-        /// </summary>
-        private Vector2D vectPerpB;
+        ///// <summary>
+        ///// A vector perpendicular to the B-axis. 
+        ///// </summary>
+        //private Vector2D vectPerpB;
 
         /// <summary>
         /// Step size along each axis. 
@@ -186,34 +158,33 @@ namespace Graph.Grid
         /// Constructs a new hexagonal grid, using the given parameters. 
         /// </summary>
         /// <param name="sizeHex">The size of a hexagon's side. </param>
-        /// <param name="gridType">The type of grid to represent. </param>
-        private HexagonGrid(int sizeHex, HexagonGridTypes gridType)
+        /// <param name="pointyTop">Determines the orientation of the hexagons. If true, the pointy side will point upwards/north. </param>
+        /// <param name="odd">Determines whether the first row/column begins inset or outset. This affects the "zig-zag" pattern of the grid. 
+        /// If pointy top is true, rows are affected. If pointy top is false, columns are affected. </param>
+        private HexagonGrid(int sizeHex, bool pointyTop, bool odd)
         {
-            this.GridType = gridType;
+            this.PointyTop = pointyTop;
+            this.Odd = odd;
             this.SizeHex = sizeHex;
 
-            if (gridType == HexagonGridTypes.ColumnEven || gridType == HexagonGridTypes.ColumnOdd)
-                this.PointyTop = true;
-            else
-                this.PointyTop = false;
-
-            this.hexPolyOrigin = HexagonGrid.GetHexPoly(sizeHex, this.PointyTop);
-
-            // Cube X axis. 
-            this.vectR = new Vector2D(hexPolyOrigin.ElementAt(3), hexPolyOrigin.ElementAt(0));
-            this.vectNormR = vectR.GetNormalized();
-            // Cube Y axis. 
-            this.vectG = new Vector2D(hexPolyOrigin.ElementAt(5), hexPolyOrigin.ElementAt(2));
-            this.vectNormG = vectG.GetNormalized();
-            // Cube Z axis. 
-            this.vectB = new Vector2D(hexPolyOrigin.ElementAt(1), hexPolyOrigin.ElementAt(4));
-            this.vectNormB = vectB.GetNormalized();
-            
             // Get size of each traversal step on the grid. 
             this.sizeStep = 1.5F * (float)sizeHex;
 
-            this.vectPerpR = vectNormR.GetPerpendicular();
-            this.vectPerpB = vectNormB.GetPerpendicular();
+            // TODO: Clean up or reintegrate?
+            //this.hexPolyOrigin = HexagonGrid.GetHexPoly(sizeHex, this.PointyTop);
+
+            //// Cube X axis. 
+            //this.vectR = new Vector2D(hexPolyOrigin.ElementAt(3), hexPolyOrigin.ElementAt(0));
+            //this.vectNormR = vectR.GetNormalized();
+            //// Cube Y axis. 
+            //this.vectG = new Vector2D(hexPolyOrigin.ElementAt(5), hexPolyOrigin.ElementAt(2));
+            //this.vectNormG = vectG.GetNormalized();
+            //// Cube Z axis. 
+            //this.vectB = new Vector2D(hexPolyOrigin.ElementAt(1), hexPolyOrigin.ElementAt(4));
+            //this.vectNormB = vectB.GetNormalized();
+            
+            //this.vectPerpR = vectNormR.GetPerpendicular();
+            //this.vectPerpB = vectNormB.GetPerpendicular();
 
             this.dictCellCube = new Dictionary<Point3I, HexagonCell>();
             this.dictCellOffset = new Dictionary<Point, HexagonCell>();
@@ -221,26 +192,30 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// Creates a rectangular grid of hexagons. 
+        /// Creates a rectangular grid of hexagons, based on a given width and height. 
         /// </summary>
-        /// <param name="sizeHex"></param>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <param name="gridType"></param>
-        public HexagonGrid(int sizeHex, int width, int height, HexagonGridTypes gridType)
-            : this(sizeHex, gridType)
+        /// <param name="sizeHex">The size of a hexagon's side. </param>
+        /// <param name="width">How many tiles wide the grid will be. </param>
+        /// <param name="height">How many tiles high the grid will be. </param>
+        /// <param name="pointyTop">Determines the orientation of the hexagons. If true, the pointy side will point upwards/north. </param>
+        /// <param name="odd">Determines whether the first row/column begins inset or outset. This affects the "zig-zag" pattern of the grid. 
+        /// If pointy top is true, rows are affected. If pointy top is false, columns are affected. </param>
+        public HexagonGrid(int sizeHex, int width, int height, bool pointyTop, bool odd)
+            : this(sizeHex, pointyTop, odd)
         {
             this.CreateGrid(width, height);
         }
 
         /// <summary>
-        /// Creates a circular (hexagonal) grid of hexagons. 
+        /// Creates a hexagon shaped grid of hexagons, based on a given radius. 
         /// </summary>
-        /// <param name="sizeHex"></param>
-        /// <param name="radius"></param>
-        /// <param name="gridType"></param>
-        public HexagonGrid(int sizeHex, int radius, HexagonGridTypes gridType)
-            : this(sizeHex, gridType)
+        /// <param name="sizeHex">The size of a hexagon's side. </param>
+        /// <param name="radius">A radius, in "rings". Determines how many "rings" of hexagons to generate. </param>
+        /// <param name="pointyTop">Determines the orientation of the hexagons. If true, the pointy side will point upwards/north. </param>
+        /// <param name="odd">Determines whether the first row/column begins inset or outset. This affects the "zig-zag" pattern of the grid. 
+        /// If pointy top is true, rows are affected. If pointy top is false, columns are affected. </param>
+        public HexagonGrid(int sizeHex, int radius, bool pointyTop, bool odd)
+            : this(sizeHex, pointyTop, odd)
         {
             this.CreateGrid(radius);
         }
@@ -260,6 +235,9 @@ namespace Graph.Grid
         /// <param name="height"></param>
         private void CreateGrid(int width, int height)
         {
+            if (width < 1 || height < 1)
+                throw new ArgumentException("The given width and height can not be less than 1!");
+
             this.Width = width;
             this.Height = height;
 
@@ -367,36 +345,36 @@ namespace Graph.Grid
 
         #region GetCellPoly
 
-        /// <summary>
-        /// Returns the points of a hexagon at the given cube coordinates. 
-        /// </summary>
-        /// <param name="cubeCoords">Cube coordinates of the hex to get. </param>
-        /// <remarks>
-        /// Works with any permutation of cube axes. 
-        /// Probably slower, but untested. 
-        /// </remarks>
-        /// <returns></returns>
-        [Obsolete("Use method \"GetCellPoly\" instead. ")]
-        public IEnumerable<PointF> GetCellPoly_Old(Point3I cubeCoords)
-        {
-            IEnumerable<PointF> hexPoly = HexagonGrid.GetHexPoly(SizeHex, PointyTop);
+        ///// <summary>
+        ///// Returns the points of a hexagon at the given cube coordinates. 
+        ///// </summary>
+        ///// <param name="cubeCoords">Cube coordinates of the hex to get. </param>
+        ///// <remarks>
+        ///// Works with any permutation of cube axes. 
+        ///// Probably slower, but untested. 
+        ///// </remarks>
+        ///// <returns></returns>
+        //[Obsolete("Use method \"GetCellPoly\" instead. ")]
+        //public IEnumerable<PointF> GetCellPoly_Old(Point3I cubeCoords)
+        //{
+        //    IEnumerable<PointF> hexPoly = HexagonGrid.GetHexPoly(SizeHex, PointyTop);
 
-            // Vectors describing distance on each axis. 
-            Vector2D vectOnR = vectNormR.GetScaled(this.sizeStep * cubeCoords.X);
-            Vector2D vectOnB = vectNormB.GetScaled(this.sizeStep * cubeCoords.Z);
+        //    // Vectors describing distance on each axis. 
+        //    Vector2D vectOnR = vectNormR.GetScaled(this.sizeStep * cubeCoords.X);
+        //    Vector2D vectOnB = vectNormB.GetScaled(this.sizeStep * cubeCoords.Z);
 
-            // Points on the axes to test with. 
-            PointD pntOnR = new PointD(vectOnR.X, vectOnR.Y);
-            PointD pntOnB = new PointD(vectOnB.X, vectOnB.Y);
+        //    // Points on the axes to test with. 
+        //    PointD pntOnR = new PointD(vectOnR.X, vectOnR.Y);
+        //    PointD pntOnB = new PointD(vectOnB.X, vectOnB.Y);
 
-            PointD pntPerpR = new PointD(pntOnR.X + this.vectPerpR.X, pntOnR.Y + this.vectPerpR.Y);
-            PointD pntPerpB = new PointD(pntOnB.X + this.vectPerpB.X, pntOnB.Y + this.vectPerpB.Y);
+        //    PointD pntPerpR = new PointD(pntOnR.X + this.vectPerpR.X, pntOnR.Y + this.vectPerpR.Y);
+        //    PointD pntPerpB = new PointD(pntOnB.X + this.vectPerpB.X, pntOnB.Y + this.vectPerpB.Y);
 
-            // The intersection point represents the center of the desired hexagon. 
-            PointD? pntIntersect = CSharpMaths.GetLineIntersection(pntOnR, pntPerpR, pntOnB, pntPerpB);
+        //    // The intersection point represents the center of the desired hexagon. 
+        //    PointD? pntIntersect = CSharpMaths.GetLineIntersection(pntOnR, pntPerpR, pntOnB, pntPerpB);
 
-            return HexagonGrid.OffsetPoly(hexPoly, new PointD(pntIntersect.Value.X, pntIntersect.Value.Y));
-        }
+        //    return HexagonGrid.OffsetPoly(hexPoly, new PointD(pntIntersect.Value.X, pntIntersect.Value.Y));
+        //}
 
         /// <summary>
         /// Returns the points of a hexagon at the given cube coordinates. 
@@ -479,69 +457,72 @@ namespace Graph.Grid
         #endregion GetCell
 
         /// <summary>
-        /// Returns the Manhatten distance between the given cube coordinate points. 
+        /// Returns a list of all neighbors of the given vertex that are not marked as impassable. 
         /// </summary>
-        /// <param name="pntA"></param>
-        /// <param name="pntB"></param>
+        /// <param name="vertex"></param>
         /// <returns></returns>
-        /// <see cref="http://www.redblobgames.com/grids/hexagons/#distances"/>
-        public double GetDistance(Point3I pntA, Point3I pntB)
+        public IEnumerable<HexagonCell> GetNeighbors(HexagonCell vertex)
         {
-            return (Math.Abs(pntA.X - pntB.X) + Math.Abs(pntA.Y - pntB.Y) + Math.Abs(pntA.Z - pntB.Z)) / 2;
+            return this.GetNeighbors(vertex.Location, false);
+        }
+
+        /// <summary>
+        /// Returns a list of all neighbors of the given vertex that are not marked as impassable. 
+        /// </summary>
+        /// <param name="cubeCoords"></param>
+        /// <returns></returns>
+        public IEnumerable<HexagonCell> GetNeighbors(Point3I cubeCoords)
+        {
+            return this.GetNeighbors(cubeCoords, false);
         }
 
         /// <summary>
         /// Returns a list of all neighbors of the given vertex. 
         /// </summary>
         /// <param name="cubeCoords"></param>
+        /// <param name="allowImpassable">If true, also returns vertices marked as impassable. </param>
         /// <returns></returns>
-        public IEnumerable<HexagonCell> GetNeighbors(Point3I cubeCoords)
+        public IEnumerable<HexagonCell> GetNeighbors(Point3I cubeCoords, bool allowImpassable)
         {
-            List<HexagonCell> lCell = new List<HexagonCell>();
+            // List of all neighbors to return. 
+            List<HexagonCell> neighbors = new List<HexagonCell>();
 
-            for (int dir = 0; dir < Directions.Length; dir++)
+            // Add neighbors. 
+            foreach (Point3I dir in Directions)
             {
-                Point3I cubeCoordsAt = new Point3I(
-                    cubeCoords.X + Directions[dir].X,
-                    cubeCoords.Y + Directions[dir].Y,
-                    cubeCoords.Z + Directions[dir].Z
+                    Point3I cubeCoordsAt = new Point3I(
+                    cubeCoords.X + dir.X,
+                    cubeCoords.Y + dir.Y,
+                    cubeCoords.Z + dir.Z
                 );
 
-                if (this.IsOutOfBounds(cubeCoordsAt))
-                {
+                HexagonCell neighbor = this.GetCell(cubeCoordsAt);
+
+                if (neighbor == null  || (!allowImpassable && neighbor.impassable))
                     continue;
-                }
-                lCell.Add(this.GetCell(cubeCoordsAt));
+
+                neighbors.Add(neighbor);
             }
 
-            return lCell;
+            return neighbors;
         }
 
         /// <summary>
-        /// Returns a list of all neighbors of the given vertex. 
-        /// </summary>
-        /// <param name="vertex"></param>
-        /// <returns></returns>
-        public IEnumerable<HexagonCell> GetNeighbors(HexagonCell vertex)
-        {
-            return this.GetNeighbors(vertex.Location);
-        }
-
-        /// <summary>
-        /// Returns true, if the given verices are neighbors. 
+        /// Returns true, if the given vertices are neighbors. 
         /// </summary>
         /// <param name="vertexA"></param>
         /// <param name="vertexB"></param>
         /// <returns></returns>
         public bool IsAdjacent(HexagonCell vertexA, HexagonCell vertexB)
         {
-            // TODO: Check if optimization possible. 
-            IEnumerable<HexagonCell> neighbors = this.GetNeighbors(vertexA);
+            int dx = Math.Abs(vertexA.X - vertexB.X);
+            int dy = Math.Abs(vertexA.Y - vertexB.Y);
+            int dz = Math.Abs(vertexA.Z - vertexB.Z);
 
-            if (neighbors.Contains(vertexB))
-                return true;
-            else
+            if (dx > 1 || dy > 1 || dz > 1)
                 return false;
+            else
+                return true;
         }
         
         /// <summary>
@@ -684,15 +665,20 @@ namespace Graph.Grid
         /// <returns></returns>
         public Point GetCubeToOffset(Point3I cubeCoords)
         {
-            if (this.GridType == HexagonGridTypes.ColumnEven)
-                return this.GetCubeToQEven(cubeCoords);
-            //else if (this.GridType == HexagonGridTypes.ColumnOdd)
-            //    return this.GetCubeToQOdd(cubeCoords);
-            else if (this.GridType == HexagonGridTypes.RowEven)
-                return this.GetCubeToREven(cubeCoords);
-            //else if (this.GridType == HexagonGridTypes.RowOdd)
-            //    return this.GetCubeToROdd(cubeCoords);
-
+            if (this.PointyTop) // Rows
+            {
+                if (this.Odd)
+                    throw new NotImplementedException();
+                else
+                    return this.GetCubeToREven(cubeCoords);
+            }
+            else // Columns
+            {
+                if (this.Odd)
+                    throw new NotImplementedException();
+                else
+                    return this.GetCubeToQEven(cubeCoords);
+            }
             return new Point(-1, -1);
         }
 
@@ -704,15 +690,20 @@ namespace Graph.Grid
         /// <returns></returns>
         public Point3I GetOffsetToCube(Point offsetCoords)
         {
-            if (this.GridType == HexagonGridTypes.ColumnEven)
-                return this.GetQEvenToCube(offsetCoords);
-            //else if (this.GridType == HexagonGridTypes.ColumnOdd)
-            //    return this.GetQOddToCube(offsetCoords);
-            else if (this.GridType == HexagonGridTypes.RowEven)
-                return this.GetREvenToCube(offsetCoords);
-            //else if (this.GridType == HexagonGridTypes.RowOdd)
-            //    return this.GetROddToCube(offsetCoords);
-
+            if (this.PointyTop) // Rows
+            {
+                if (this.Odd)
+                    throw new NotImplementedException();
+                else
+                    return this.GetREvenToCube(offsetCoords);
+            }
+            else // Columns
+            {
+                if (this.Odd)
+                    throw new NotImplementedException();
+                else
+                    return this.GetQEvenToCube(offsetCoords);
+            }
             return new Point3I(-1, -1, -1);
         }
 
@@ -916,14 +907,15 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// Returns the distance between the given cells. 
+        /// Returns the Manhatten distance between the given cells. 
         /// </summary>
         /// <param name="vertexA"></param>
         /// <param name="vertexB"></param>
         /// <returns></returns>
+        /// <see cref="http://www.redblobgames.com/grids/hexagons/#distances"/>
         public float GetDistance(HexagonCell vertexA, HexagonCell vertexB)
         {
-            throw new NotImplementedException();
+            return (Math.Abs(vertexA.X - vertexB.X) + Math.Abs(vertexA.Y - vertexB.Y) + Math.Abs(vertexA.Z - vertexB.Z)) / 2;
         }
 
         /// <summary>
@@ -935,6 +927,7 @@ namespace Graph.Grid
         /// <returns></returns>
         public float GetHeuristic(HexagonCell vertexA, HexagonCell vertexB)
         {
+            // Euclidean
             float D = this.GetCostLowest(vertexB);
             float dx = Math.Abs(vertexB.X - vertexA.X);
             float dy = Math.Abs(vertexB.Y - vertexA.Y);

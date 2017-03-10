@@ -70,10 +70,10 @@ namespace Graph.Pathing
 
                         frontier.Enqueue(neighbor, priority);
 
-                        if (!cameFrom.ContainsKey(neighbor))
-                            cameFrom.Add(neighbor, current);
-                        else
+                        if (cameFrom.ContainsKey(neighbor))
                             cameFrom[neighbor] = current;
+                        else
+                            cameFrom.Add(neighbor, current);
                     }
                 }
             }

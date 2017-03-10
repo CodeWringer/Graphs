@@ -12,9 +12,6 @@ namespace Graph.Grid
     /// </summary>
     /// <remarks>
     /// TODO:
-    /// - Pathfinding. 
-    ///     - Allow / Disallow edge cutting. 
-    /// 
     /// - Field of view. 
     /// - Range. 
     /// - Rotation. 
@@ -65,7 +62,7 @@ namespace Graph.Grid
         /// <summary>
         /// If true, allows path searching to cut corners. 
         /// </summary>
-        public bool allowEdgeCutting;
+        public bool allowCornerCutting;
 
         /// <summary>
         /// The cost of diagonal searching on this grid. 
@@ -158,39 +155,100 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// Returns a list of all neighbors of the given vertex. 
+        /// Returns a list of all neighbors of the given vertex that are not marked as impassable. 
         /// </summary>
         /// <param name="vertex"></param>
         /// <returns></returns>
         public IEnumerable<SquareCell> GetNeighbors(Point vertex)
         {
+            return this.GetNeighbors(vertex, false);
+        }
+
+        /// <summary>
+        /// Returns a list of all neighbors of the given vertex that are not marked as impassable. 
+        /// </summary>
+        /// <param name="vertex"></param>
+        /// <returns></returns>
+        public IEnumerable<SquareCell> GetNeighbors(SquareCell vertex)
+        {
+            return this.GetNeighbors(vertex.Location, false);
+        }
+
+        /// <summary>
+        /// Returns a list of all neighbors of the given vertex. 
+        /// </summary>
+        /// <param name="vertex"></param>
+        /// <param name="allowImpassable">If true, also returns vertices marked as impassable. </param>
+        /// <returns></returns>
+        public IEnumerable<SquareCell> GetNeighbors(Point vertex, bool allowImpassable)
+        {
+            // List of all neighbors to return. 
             List<SquareCell> neighbors = new List<SquareCell>();
+            // List of all axis-aligned neighbors. Also contains impassable neighbors. 
+            List<SquareCell> neighborsAligned = new List<SquareCell>();
 
             int xAt = -1;
             int yAt = -1;
 
-            for (int i = 0; i < Directions.Length; i++)
+            // Add all axis-aligned neighbors. 
+            foreach (Point dir in Directions)
             {
-                xAt = vertex.X + Directions[i].X;
-                yAt = vertex.Y + Directions[i].Y;
+                // Coordinates of the axis-aligned neighbor. 
+                xAt = vertex.X + dir.X;
+                yAt = vertex.Y + dir.Y;
 
-                if (!IsOutOfBounds(new Point(xAt, yAt)))
-                {
-                    neighbors.Add(this.grid[xAt, yAt]);
-                }
+                SquareCell neighbor = this.GetCell(xAt, yAt);
+
+                neighborsAligned.Add(neighbor);
+
+                if (neighbor == null  || (!allowImpassable && neighbor.impassable))
+                    continue;
+
+                neighbors.Add(neighbor);
             }
 
+            // Add diagonal neighbors. 
             if (this.allowDiagonal)
             {
-                for (int i = 0; i < DirectionsDiag.Length; i++)
+                foreach (Point dirDiag in DirectionsDiag)
                 {
-                    xAt = vertex.X + DirectionsDiag[i].X;
-                    yAt = vertex.Y + DirectionsDiag[i].Y;
+                    // Is true, if the diagonal neighbor should be added. 
+                    bool allowAdd = true;
 
-                    if (!IsOutOfBounds(new Point(xAt, yAt)))
+                    // Coordinates of the diagonal neighbor. 
+                    xAt = vertex.X + dirDiag.X;
+                    yAt = vertex.Y + dirDiag.Y;
+
+                    SquareCell neighborDiag = this.GetCell(xAt, yAt);
+
+                    if (neighborDiag == null || (!allowImpassable && neighborDiag.impassable))
+                        continue;
+
+                    if (!allowImpassable && !this.allowCornerCutting) // Prevent adding if cutting corner. 
                     {
-                        neighbors.Add(this.grid[xAt, yAt]);
+                        // Check if any axis-aligned neighbor of the currently looked at diagonal neighbor 
+                        // can be added. 
+                        foreach (Point dir in Directions)
+                        {
+                            SquareCell neighborShared = this.GetCell(xAt + dir.X, yAt + dir.Y);
+
+                            if (neighborShared == null)
+                                continue;
+
+                            if (!neighborsAligned.Contains(neighborShared)) // Skip non-shared neighbors. 
+                            {
+                                continue;
+                            }
+                            else if (neighborShared.impassable) // Shared neighbor impassable -> This is what would cause corner cutting. 
+                            {
+                                allowAdd = false;
+                                break;
+                            }
+                        }
                     }
+
+                    if (allowAdd)
+                        neighbors.Add(neighborDiag); // Add diagonal neighbor. 
                 }
             }
 
@@ -198,30 +256,20 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// Returns a list of all neighbors of the given vertex. 
-        /// </summary>
-        /// <param name="vertex"></param>
-        /// <returns></returns>
-        public IEnumerable<SquareCell> GetNeighbors(SquareCell vertex)
-        {
-            return this.GetNeighbors(vertex.Location);
-        }
-
-        /// <summary>
-        /// Returns true, if the given verices are neighbors. 
+        /// Returns true, if the given vertices are neighbors. 
         /// </summary>
         /// <param name="vertexA"></param>
         /// <param name="vertexB"></param>
         /// <returns></returns>
         public bool IsAdjacent(SquareCell vertexA, SquareCell vertexB)
         {
-            // TODO: Check if optimization possible. 
-            IEnumerable<SquareCell> neighbors = this.GetNeighbors(vertexA);
+            int dx = Math.Abs(vertexA.X - vertexB.X);
+            int dy = Math.Abs(vertexA.Y - vertexB.Y);
 
-            if (neighbors.Contains(vertexB))
-                return true;
-            else
+            if (dx > 1 || dy > 1)
                 return false;
+            else
+                return true;
         }
 
         /// <summary>
@@ -248,7 +296,7 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// Returns a cell at the given grid coordinates. 
+        /// Returns a cell at the given grid coordinates, if there is no cell at the given coordinates. 
         /// </summary>
         /// <param name="pnt"></param>
         /// <returns></returns>
@@ -261,7 +309,7 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// Returns a cell at the given grid coordinates. 
+        /// Returns a cell at the given grid coordinates, or null, if there is no cell at the given coordinates. 
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
@@ -270,21 +318,7 @@ namespace Graph.Grid
         {
             return this.GetCell(new Point(x, y));
         }
-
-        /// <summary>
-        /// Returns the Manhatten distance between the given points. 
-        /// </summary>
-        /// <param name="pntA"></param>
-        /// <param name="pntB"></param>
-        /// <returns></returns>
-        public double GetDistance(Point pntA, Point pntB)
-        {
-            int dx = pntB.X - pntA.X;
-            int dy = pntB.Y - pntA.Y;
-
-            return Math.Abs(dx) + Math.Abs(dy);
-        }
-
+        
         /// <summary>
         /// Returns all the points along a line, using Bresenham's line algorithm. 
         /// </summary>
@@ -363,14 +397,17 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// Returns the distance between the given cells. 
+        /// Returns the Manhatten distance between the given cells. 
         /// </summary>
         /// <param name="vertexA"></param>
         /// <param name="vertexB"></param>
         /// <returns></returns>
         public float GetDistance(SquareCell vertexA, SquareCell vertexB)
         {
-            throw new NotImplementedException();
+            int dx = vertexB.X - vertexA.X;
+            int dy = vertexB.Y - vertexA.Y;
+
+            return Math.Abs(dx) + Math.Abs(dy);
         }
 
         /// <summary>
@@ -384,14 +421,14 @@ namespace Graph.Grid
         {
             float D = this.GetCostLowest(vertexB);
 
-            if (this.costDiagonal > 0)
+            if (this.costDiagonal > 0) // Diagonal
             {
                 float D2 = this.GetCost(vertexA, vertexB);
                 float dx = Math.Abs(vertexB.X - vertexA.X);
                 float dy = Math.Abs(vertexB.Y - vertexA.Y);
                 return D * (dx + dy) + (D2 - 2 * D) * Math.Min(dx, dy);
             } 
-            else
+            else // Manhattan
             {
                 float dx = Math.Abs(vertexB.X - vertexA.X);
                 float dy = Math.Abs(vertexB.Y - vertexA.Y);
