@@ -7,16 +7,13 @@ using System.Linq;
 namespace Graph.Grid
 {
     /// <summary>
-    /// Represents a rectangular grid in two dimensional space. 
-    /// Holds vertices with additional information such as weight, edges and neighbors. 
+    /// Represents a grid of squares in two dimensional space. 
     /// </summary>
     /// <remarks>
     /// TODO:
-    /// - Field of view. 
     /// - Range. 
     /// - Rotation. 
     /// - Rings. 
-    /// - Rounding. 
     /// - Wraparound. 
     /// </remarks>
     public class SquareGrid : IGraph<SquareCell>
@@ -121,12 +118,14 @@ namespace Graph.Grid
                 }
             }
         }
-        
+
         #endregion Constructors
         /*****************************************************************/
         // Methods
         /*****************************************************************/
         #region Methods
+
+        #region IsOutOfBounds
 
         /// <summary>
         /// Returns true, if the given coordinates are out of bounds. 
@@ -153,6 +152,10 @@ namespace Graph.Grid
         {
             return this.IsOutOfBounds(vertex.X, vertex.Y);
         }
+
+        #endregion IsOutOfBounds
+
+        #region GetNeighbors
 
         /// <summary>
         /// Returns a list of all neighbors of the given vertex that are not marked as impassable. 
@@ -255,6 +258,8 @@ namespace Graph.Grid
             return neighbors;
         }
 
+        #endregion GetNeighbors
+
         /// <summary>
         /// Returns true, if the given vertices are neighbors. 
         /// </summary>
@@ -272,28 +277,7 @@ namespace Graph.Grid
                 return true;
         }
 
-        /// <summary>
-        /// Returns a cell at the given cartesian coordinates. 
-        /// </summary>
-        /// <param name="pnt"></param>
-        /// <returns></returns>
-        public SquareCell GetCellAt(PointF pnt)
-        {
-            float x = pnt.X / this.sizeTile.Width;
-            float y = pnt.Y / this.sizeTile.Height;
-
-            return this.GetCell(new Point((int)Math.Round(x), (int)Math.Round(y)));
-        }
-
-        /// <summary>
-        /// Returns a cell at the given cartesian coordinates. 
-        /// </summary>
-        /// <param name="pnt"></param>
-        /// <returns></returns>
-        public SquareCell GetCellAt(float x, float y)
-        {
-            return this.GetCellAt(new PointF(x, y));
-        }
+        #region GetCell
 
         /// <summary>
         /// Returns a cell at the given grid coordinates, if there is no cell at the given coordinates. 
@@ -302,10 +286,7 @@ namespace Graph.Grid
         /// <returns></returns>
         public SquareCell GetCell(Point pnt)
         {
-            if (IsOutOfBounds(pnt))
-                return null;
-
-            return this.grid[pnt.X, pnt.Y];
+            return this.GetCell(pnt.X, pnt.Y);
         }
 
         /// <summary>
@@ -316,54 +297,86 @@ namespace Graph.Grid
         /// <returns></returns>
         public SquareCell GetCell(int x, int y)
         {
-            return this.GetCell(new Point(x, y));
+            if (IsOutOfBounds(x, y))
+                return null;
+
+            return this.grid[x, y];
         }
-        
+
+        #endregion GetCell
+
+        #region GetLine
+
         /// <summary>
         /// Returns all the points along a line, using Bresenham's line algorithm. 
         /// </summary>
-        /// <param name="pntStart"></param>
-        /// <param name="pntEnd"></param>
+        public IEnumerable<SquareCell> GetLine(SquareCell vertexA, SquareCell vertexB)
+        {
+            return this.GetLine(vertexA.Location, vertexB.Location);
+        }
+
+        /// <summary>
+        /// Returns all the points along a line, using Bresenham's line algorithm. 
+        /// </summary>
+        /// <param name="coordsStart"></param>
+        /// <param name="coordsGoal"></param>
         /// <returns></returns>
         /// <see cref="http://stackoverflow.com/questions/11678693/all-cases-covered-bresenhams-line-algorithm"/>
-        public IEnumerable<SquareCell> GetLine(Point pntStart, Point pntEnd)
+        public IEnumerable<SquareCell> GetLine(Point coordsStart, Point coordsGoal)
         {
             List<SquareCell> lPoints = new List<SquareCell>();
 
-            int w = pntEnd.X - pntStart.X;
-            int h = pntEnd.Y - pntStart.Y;
-            int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
+            int w = coordsGoal.X - coordsStart.X;
+            int h = coordsGoal.Y - coordsStart.Y;
+            int dx1 = 0;
+            int dy1 = 0;
+            int dx2 = 0;
+            int dy2 = 0;
+
             if (w < 0) dx1 = -1; else if (w > 0) dx1 = 1;
             if (h < 0) dy1 = -1; else if (h > 0) dy1 = 1;
             if (w < 0) dx2 = -1; else if (w > 0) dx2 = 1;
+
             int longest = Math.Abs(w);
             int shortest = Math.Abs(h);
+
             if (!(longest > shortest))
             {
                 longest = Math.Abs(h);
                 shortest = Math.Abs(w);
-                if (h < 0) dy2 = -1; else if (h > 0) dy2 = 1;
+
+                if (h < 0)
+                    dy2 = -1;
+                else if (h > 0)
+                    dy2 = 1;
+
                 dx2 = 0;
             }
+
             int numerator = longest >> 1;
+
+            Point coordsCurrent = coordsStart;
+
             for (int i = 0; i <= longest; i++)
             {
-                //putpixel(x, y, color);
-                lPoints.Add(this.grid[pntStart.X, pntStart.Y]);
+                lPoints.Add(this.GetCell(coordsCurrent));
+
                 numerator += shortest;
                 if (!(numerator < longest))
                 {
                     numerator -= longest;
-                    pntStart.X += dx1;
-                    pntStart.Y += dy1;
+                    coordsCurrent.X += dx1;
+                    coordsCurrent.Y += dy1;
                 }
                 else {
-                    pntStart.X += dx2;
-                    pntStart.Y += dy2;
+                    coordsCurrent.X += dx2;
+                    coordsCurrent.Y += dy2;
                 }
             }
             return lPoints;
         }
+
+        #endregion GetLine
 
         /// <summary>
         /// Returns the cost difference between the given cells. 
@@ -435,6 +448,33 @@ namespace Graph.Grid
                 return D * (dx + dy);
             }
         }
+
+        #region Conversions
+
+        /// <summary>
+        /// Returns offset coordinates for the given cartesian coordinates. 
+        /// </summary>
+        /// <param name="cartesianCoords"></param>
+        /// <returns></returns>
+        public Point GetCartesianToOffset(PointF cartesianCoords)
+        {
+            float x = cartesianCoords.X / this.sizeTile.Width;
+            float y = cartesianCoords.Y / this.sizeTile.Height;
+
+            return new Point((int)Math.Floor(x), (int)Math.Floor(y));
+        }
+
+        /// <summary>
+        /// Returns cartesian coordinates for the given offset coordinates. 
+        /// </summary>
+        /// <param name="offsetCoords"></param>
+        /// <returns></returns>
+        public PointF GetOffsetToCartesian(Point offsetCoords)
+        {
+            return new PointF(offsetCoords.X * this.sizeTile.Width, offsetCoords.Y * this.sizeTile.Height);
+        }
+
+        #endregion Conversions
 
         #endregion Methods
     }
