@@ -14,14 +14,9 @@ namespace Graph.Grid
     /// </summary>
     /// <remarks>
     /// TODO:
-    ///     - Hexagon shape
-    /// - Line drawing. 
-    /// 
     /// - Field of view. 
-    /// - Range. 
     /// - Rotation. 
     /// - Rings. 
-    /// - Rounding. 
     /// - Wraparound. 
     /// </remarks>
     /// <see cref="http://www.redblobgames.com/grids/hexagons/"/>
@@ -231,7 +226,38 @@ namespace Graph.Grid
         /// <param name="radius"></param>
         private void CreateGrid(int radius)
         {
-            throw new NotImplementedException();
+            this.Width = radius * 2;
+            this.Height = radius * 2;
+
+            for (int x = -radius; x <= radius; x++)
+            {
+                for (int y = -radius; y <= radius; y++)
+                {
+                    int z = 0;
+
+                    if (x == 0)
+                        z = -y;
+                    else if (y == 0)
+                        z = -x;
+                    else
+                        z = -x - y;
+
+                    if (z > radius || z < -radius) // radius-constraint violated. 
+                        continue;
+
+                    // Get coordinates. 
+                    Point3I cubeCoords = new Point3I(x, y, z);
+                    Point offsetCoords = this.GetCubeToOffset(cubeCoords);
+
+                    // Create new cell. 
+                    HexagonCell oCell = new HexagonCell(cubeCoords, offsetCoords);
+
+                    // Add cell to data structure. 
+                    this.Cells.Add(oCell);
+                    this.dictCellCube.Add(cubeCoords, oCell);
+                    this.dictCellOffset.Add(offsetCoords, oCell);
+                }
+            }
         }
 
         #endregion CreateGrid
@@ -830,7 +856,7 @@ namespace Graph.Grid
             else if (yDiff > zDiff)
                 ry = -rx - rz;
             else
-                rz = -rx - rz;
+                rz = -rx - ry;
 
             return new Point3I((int)rx, (int)ry, (int)rz);
         }
@@ -842,11 +868,11 @@ namespace Graph.Grid
         #region GetLine
 
         /// <summary>
-        /// 
+        /// Returns an interpolated value, based on the given "a" and "b" values and interpolation value "t". 
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <param name="t"></param>
+        /// <param name="a">The first value to interpolate between. </param>
+        /// <param name="b">The second value to interpolate between. </param>
+        /// <param name="t">The interpolation value. </param>
         /// <returns></returns>
         private float GetLerp(float a, float b, float t)
         {
@@ -854,7 +880,7 @@ namespace Graph.Grid
         }
 
         /// <summary>
-        /// 
+        /// Returns interpolated cube coordinates, based on the given cube coordiantes and interpolation value. 
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>
@@ -899,7 +925,10 @@ namespace Graph.Grid
                 float t = 1.0F / n * i;
                 Point3F cubeLerped = this.GetLerpCube(vertexA.Location, vertexB.Location, t);
                 Point3I cubeRounded = this.GetCubeRounded(cubeLerped);
-                results.Add(this.GetCell(cubeRounded));
+                HexagonCell oCell = this.GetCell(cubeRounded);
+
+                if (oCell != null)
+                    results.Add(oCell);
             }
 
             return results;
@@ -968,6 +997,44 @@ namespace Graph.Grid
             // TODO: Consider changing to this? Paths are more direct, but with a "zig-zag" pattern. 
             //float dz = Math.Abs(vertexB.Z - vertexA.Z);
             //return D * (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
+        /// <summary>
+        /// Returns a range of cells around the given cell, with "n" distance. 
+        /// </summary>
+        /// <param name="cubeCoords"></param>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        public IEnumerable<HexagonCell> GetRange(Point3I cubeCoords, int n)
+        {
+            List<HexagonCell> result = new List<HexagonCell>();
+
+            for (int x = -n; x <= n; x++)
+            {
+                for (int y = -n; y <= n; y++)
+                {
+                    int z = 0;
+
+                    if (x == 0)
+                        z = -y;
+                    else if (y == 0)
+                        z = -x;
+                    else
+                        z = -x - y;
+
+                    if (z > n || z < -n) // n-constraint violated. 
+                        continue;
+
+                    // Get cell at coordinates. 
+                    Point3I pntCell = new Point3I(x + cubeCoords.X, y + cubeCoords.Y, z + cubeCoords.Z);
+                    HexagonCell oCell = this.GetCell(pntCell);
+
+                    if (oCell != null)
+                        result.Add(oCell); // Add cell to result list. 
+                }
+            }
+
+            return result;
         }
 
         #endregion Methods

@@ -11,7 +11,6 @@ namespace Graph.Grid
     /// </summary>
     /// <remarks>
     /// TODO:
-    /// - Range. 
     /// - Rotation. 
     /// - Rings. 
     /// - Wraparound. 
@@ -27,7 +26,12 @@ namespace Graph.Grid
         /// A two dimensional array, representing the grid. 
         /// </summary>
         public SquareCell[,] grid { get; private set; }
-        
+
+        /// <summary>
+        /// A list of all cells. 
+        /// </summary>
+        public List<SquareCell> Cells { get; private set; }
+
         /// <summary>
         /// The size of a tile. 
         /// </summary>
@@ -105,6 +109,7 @@ namespace Graph.Grid
 
             this.sizeTile = sizeTile;
             this.costDiagonal = costDiagonal;
+            this.Cells = new List<SquareCell>();
 
             // Create new grid. 
             this.grid = new SquareCell[width, height];
@@ -114,7 +119,9 @@ namespace Graph.Grid
             {
                 for (int y = 0; y < this.grid.GetLength(1); y++)
                 {
-                    this.grid[x, y] = new SquareCell(x, y);
+                    SquareCell oCell = new SquareCell(x, y);
+                    this.grid[x, y] = oCell;
+                    this.Cells.Add(oCell);
                 }
             }
         }
@@ -475,6 +482,31 @@ namespace Graph.Grid
         }
 
         #endregion Conversions
+
+        /// <summary>
+        /// Returns a range of cells around the given cell, with "n" distance. 
+        /// </summary>
+        /// <param name="offsetCoords"></param>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        public IEnumerable<SquareCell> GetRange(Point offsetCoords, int n)
+        {
+            List<SquareCell> result = new List<SquareCell>();
+
+            for (int x = -n; x <= n; x++)
+            {
+                for (int y = -n; y <= n; y++)
+                {
+                    Point pntCell = new Point(x + offsetCoords.X, y + offsetCoords.Y);
+                    SquareCell oCell = this.GetCell(pntCell);
+
+                    if (oCell != null)
+                        result.Add(oCell);
+                }
+            }
+
+            return result;
+        }
 
         #endregion Methods
     }
